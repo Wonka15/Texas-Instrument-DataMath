@@ -47,7 +47,7 @@ controls.minZoom = 0.7;
 controls.maxZoom = 2.4;
 controls.maxPolarAngle = Math.PI; // Permit an exact rear/bottom orthographic inspection view.
 
-world.add(new THREE.HemisphereLight(0xffe4c0, 0x21170f, 2.0));
+const ambientLight = new THREE.HemisphereLight(0xffe4c0, 0x21170f, 2.0); world.add(ambientLight);
 const keyLight = new THREE.DirectionalLight(0xffe1b7, 3.0);
 keyLight.position.set(-4, 8, 5); keyLight.castShadow = true; keyLight.shadow.mapSize.set(1024, 1024); world.add(keyLight);
 const rimLight = new THREE.DirectionalLight(0xff543c, 1.4); rimLight.position.set(4, 5, -5); world.add(rimLight);
@@ -201,14 +201,42 @@ const ledSparks=new THREE.Points(sparkGeometry,sparkMaterial);
 ledSparks.frustumCulled=false;ledSparks.renderOrder=22;calculator.add(ledSparks);
 // LED Studio preset and live controls.
 const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'subtle',reflections:true};
-let ledPulse=0,lastLedFrame=0;
+let displaySegmentFactor=1,darkMode=false,savedBrightness=ledStudio.brightness,ledPulse=0,lastLedFrame=0;
+const environmentLights=[{light:ambientLight,normal:2.0,dark:.12},{light:keyLight,normal:3.0,dark:.16},{light:rimLight,normal:1.4,dark:.08},{light:fillLight,normal:.65,dark:.035}];
+function effectiveLedBrightness(){return darkMode?1:ledStudio.brightness/100;}
+function setDarkMode(enabled){
+ darkMode=Boolean(enabled);
+ if(darkMode){savedBrightness=ledStudio.brightness;ledStudio.brightness=100;}
+ else ledStudio.brightness=savedBrightness;
+ environmentLights.forEach(({light,normal,dark})=>{light.intensity=darkMode?dark:normal;});
+ const toggle=document.querySelector('#darkModeToggle');
+ if(toggle){toggle.setAttribute('aria-pressed',String(darkMode));toggle.textContent=darkMode?'☾ DARK MODE ON':'☼ DARK MODE OFF';}
+ const slider=document.querySelector('#ledBrightness'),value=document.querySelector('#ledBrightnessValue');
+ if(slider)slider.value=String(ledStudio.brightness);
+ if(value)value.textContent=ledStudio.brightness+'%';
+ document.documentElement.classList.toggle('datamath-dark-mode',darkMode);
+ applyLedStudio();
+}
+function flash3DKey(action){
+ if(!darkMode)return;
+ const cap=keyMeshes.find(item=>item.userData.action===action);
+ if(!cap||!cap.userData.top)return;
+ const top=cap.userData.top;
+ if(top.userData.glowTimer)clearTimeout(top.userData.glowTimer);
+ if(!top.userData.originalMaterial)top.userData.originalMaterial=top.material;
+ if(top.material===top.userData.originalMaterial)top.material=top.userData.originalMaterial.clone();
+ top.material.emissive.set(action==='equals'?0xff6a20:0xff281b);
+ top.material.emissiveIntensity=action==='equals'?2.8:2.1;
+ top.userData.glowTimer=setTimeout(()=>{top.material=top.userData.originalMaterial;top.userData.glowTimer=null;},160);
+}
 function applyLedStudio(){
- const b=ledStudio.brightness/100;
+ const b=effectiveLedBrightness();
  ledMat.color.copy(ledBaseColor).multiplyScalar(b);
  const styleScale=ledStudio.style==='authentic'?.78:ledStudio.style==='clean'?.62:ledStudio.style==='futuristic'?1.18:1;
  ledGlow.scale.set(2.8*styleScale,.92*styleScale,1);
  ledGlow.material.color.set(ledStudio.style==='futuristic'?0xff4935:0xff2a16);
- ledLight.intensity=1.75*b*(ledStudio.style==='cinematic'?1.12:1);
+ ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.12:1)*displaySegmentFactor;
+ tableReflection.material.opacity=(darkMode?1.2:.9)*displaySegmentFactor;
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
  ledSparks.visible=ledStudio.particles!=='off';
 }
@@ -233,7 +261,8 @@ function animateLedEffects(timeMs){
  const b=ledStudio.brightness/100;
  const base=ledStudio.style==='cinematic'?.9:ledStudio.style==='authentic'?.66:ledStudio.style==='clean'?.46:.95;
  ledGlow.material.opacity=Math.min(1,base*b*pulse+ledPulse*.15);
- ledLight.intensity=1.75*b*pulse+ledPulse*.9;
+ ledLight.intensity=((darkMode?3.2:1.75)*b*pulse+ledPulse*(darkMode?1.4:.9))*displaySegmentFactor;
+ tableReflection.material.opacity=(darkMode?1.2:.9)*displaySegmentFactor;
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.74:ledStudio.particles==='reactive'?.24+ledPulse*.68:0;
  for(let i=0;i<sparkCount;i++){
   const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
@@ -249,7 +278,8 @@ function wireLedStudio(){
  const style=document.querySelector('#ledStyle'),brightness=document.querySelector('#ledBrightness');
  const brightnessValue=document.querySelector('#ledBrightnessValue'),particles=document.querySelector('#ledParticles');
  const flicker=document.querySelector('#ledFlicker'),reflections=document.querySelector('#ledReflections');
- if(!style||!brightness||!brightnessValue||!particles||!flicker||!reflections)return;
+ const darkToggle=document.querySelector('#darkModeToggle');
+ if(!style||!brightness||!brightnessValue||!particles||!flicker||!reflections||!darkToggle)return;
  style.value=ledStudio.style;brightness.value=String(ledStudio.brightness);
  particles.value=ledStudio.particles;flicker.value=ledStudio.flicker;reflections.checked=ledStudio.reflections;
  brightnessValue.textContent=ledStudio.brightness+'%';
@@ -258,10 +288,13 @@ function wireLedStudio(){
  particles.addEventListener('change',()=>{ledStudio.particles=particles.value;applyLedStudio();});
  flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;applyLedStudio();});
  reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
+ darkToggle.addEventListener('click',()=>setDarkMode(!darkMode));
  applyLedStudio();
 }
 function setLed(text){
  const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
+ const litSegments=chars.split('').reduce((total,ch)=>total+(segments[ch]||[]).length,0)+(raw.includes('.')?1:0);
+ displaySegmentFactor=.68+.32*(litSegments/56);
  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
  const dotSlot=decimalDigits>0?8-clean.length+decimalDigits-1:-1;
  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
@@ -313,7 +346,7 @@ keys.forEach(([label,action,row,col])=>{
  const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
  const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 82px Arial':'900 150px Arial',color:'#080604'});
  face.rotation.x=Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
- cap.userData={label,action,homeY:.455};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
+ cap.userData={label,action,homeY:.455,top};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
 });
 
 // Battery cover and rear details are kept below the face and do not intrude into the keypad.
@@ -368,7 +401,7 @@ function tidy(n){if(!Number.isFinite(n))return 'Error';if(Math.abs(n)>99999999)r
 function calculate(a,b,op){if(op==='+')return a+b;if(op==='-')return a-b;if(op==='*')return a*b;if(op==='/')return b===0?NaN:a/b;return b;}
 function press(action,label){
  clickSound(action==='equals'?520:action.startsWith('op:')?650:820,.035);
- triggerLedActivity(action);
+ triggerLedActivity(action);flash3DKey(action);
  if(action.startsWith('num:')){
   const n=action.slice(4);current=waiting?n:(current==='0'?n:current==='Error'?n:current+n).slice(0,12);waiting=false;
  }else if(action==='decimal'){
