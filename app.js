@@ -192,12 +192,15 @@ for(let i=0;i<8;i++){
  topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
  const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
  const glyphCanvas=document.createElement('canvas');glyphCanvas.width=256;glyphCanvas.height=320;
- drawNixieGlyph(glyphCanvas,'0',effectiveLedBrightness());
+ drawNixieGlyph(glyphCanvas,'0',0.78); // Initial artwork uses the default LED brightness before controls initialize.
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#fff0c6',transparent:true,opacity:1,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.238,.292),glyphMaterial);
- glyph.rotation.x=Math.PI/2;glyph.position.set(0,.55,0); // Keep the active numeral inside the glass envelope, below the top ring.glyph.renderOrder=27;tube.add(glyph);
+ glyph.rotation.x=Math.PI/2;
+ glyph.position.set(0,.55,0); // Keep the active numeral inside the glass envelope, below the top ring.
+ glyph.renderOrder=27;
+ tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
 }
