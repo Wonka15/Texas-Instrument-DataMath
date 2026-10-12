@@ -88,26 +88,26 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
   mesh.position.set(x,y,z); mesh.castShadow=true; parent.add(mesh); return mesh;
 }
 // TI-2500-inspired shell: the working face points toward +Y.
-roundedBox(3.08,.54,5.28,.18,edgeMat,calculator,0,0,0);
-roundedBox(2.98,.42,5.18,.16,bodyMat,calculator,0,.20,0);
+roundedBox(3.30,.54,3.95,.18,edgeMat,calculator,0,0,0);
+roundedBox(3.20,.42,3.85,.16,bodyMat,calculator,0,.20,0);
 // Inset dark keyboard surround.
-roundedBox(2.62,.065,2.85,.09,darkMat,calculator,0,.435,-1.125);
+roundedBox(2.72,.065,2.35,.09,darkMat,calculator,0,.435,-.66);
 // Deep hooded LED well. The dark floor is recessed under the shell surface.
-roundedBox(2.5,.105,1.12,.07,edgeMat,calculator,0,.405,1.62);
-roundedBox(2.24,.018,.79,.035,mat('#160d0a',.22),calculator,0,.414,1.62);
+roundedBox(2.82,.105,1.12,.07,edgeMat,calculator,0,.405,.91);
+roundedBox(2.62,.018,.79,.035,mat('#160d0a',.22),calculator,0,.414,.91);
 // Sculpted side cheeks, thick brow and front lip make a molded hood with a deep shadow line.
-roundedBox(.20,.23,1.12,.075,bodyMat,calculator,-1.12,.49,1.62);
-roundedBox(.20,.23,1.12,.075,bodyMat,calculator,1.12,.49,1.62);
-roundedBox(2.30,.20,.24,.075,bodyMat,calculator,0,.555,2.07);
-roundedBox(2.30,.16,.19,.06,edgeMat,calculator,0,.525,1.14);
+roundedBox(.20,.23,1.12,.075,bodyMat,calculator,-1.27,.49,.91);
+roundedBox(.20,.23,1.12,.075,bodyMat,calculator,1.27,.49,.91);
+roundedBox(2.60,.20,.24,.075,bodyMat,calculator,0,.555,1.36);
+roundedBox(2.60,.16,.19,.06,edgeMat,calculator,0,.525,.43);
 // Clear, low-opacity lens over the recessed segments catches a subtle highlight.
-roundedBox(2.03,.018,.57,.025,lensMat,calculator,0,.433,1.62);
+roundedBox(2.48,.018,.57,.025,lensMat,calculator,0,.433,.91);
 // LED segments are rendered on top of the lens for reliable visibility across browsers.
 // LED segments: actual lit segment geometry, driven from calculator value.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
 function makeDigit(x){
- const group=new THREE.Group(); group.position.set(x,.451,1.62); calculator.add(group);
+ const group=new THREE.Group(); group.position.set(x,.451,.91); calculator.add(group);
  const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
  for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
    const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.009,sh),new THREE.MeshBasicMaterial({color:0x32100e,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
@@ -115,7 +115,7 @@ function makeDigit(x){
  }
  digitGroups.push(group); return group;
 }
-for(let i=0;i<8;i++)makeDigit(-.86+i*.245);
+for(let i=0;i<8;i++)makeDigit(-.98+i*.28);
 // A small red scatter suggests light refracting through the lens, with no expensive post-processing.
 const ledDustCount=22;
 const ledDustGeometry=new THREE.BufferGeometry();
@@ -124,7 +124,7 @@ const ledDustPhases=new Float32Array(ledDustCount);
 for(let i=0;i<ledDustCount;i++){
   ledDustPositions[i*3]=(Math.random()-.5)*1.95;
   ledDustPositions[i*3+1]=.458+Math.random()*.025;
-  ledDustPositions[i*3+2]=1.62+(Math.random()-.5)*.53;
+  ledDustPositions[i*3+2]=.91+(Math.random()-.5)*.53;
   ledDustPhases[i]=Math.random()*Math.PI*2;
 }
 ledDustGeometry.setAttribute('position',new THREE.BufferAttribute(ledDustPositions,3));
@@ -138,7 +138,7 @@ glowGradient.addColorStop(0,'rgba(255,48,30,.38)');glowGradient.addColorStop(.35
 glowCtx.fillStyle=glowGradient;glowCtx.fillRect(0,0,64,64);
 const glowTexture=new THREE.CanvasTexture(glowCanvas);
 const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xff4b32,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false}));
-ledGlow.position.set(0,.465,1.62);ledGlow.scale.set(2.1,.63,1);calculator.add(ledGlow);
+ledGlow.position.set(0,.465,.91);ledGlow.scale.set(2.45,.63,1);calculator.add(ledGlow);
 function setLed(text){
   // Right-align digits and attach each decimal point to the preceding digit.
   const raw=String(text).slice(0,16);
@@ -162,10 +162,10 @@ function textSprite(text,opts={}){
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.3),m);mesh.renderOrder=30;return mesh;
 }
 // Printed branding lies flat on the front face (+Y), so it remains readable in 3D.
-const tiText=textSprite('TEXAS INSTRUMENTS',{w:1.0,h:.16,font:'bold 21px Arial',color:'#392b1d'});
-tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.424,.82);calculator.add(tiText);
-const modelText=textSprite('DATAMATH',{w:.9,h:.16,font:'bold 25px Arial',color:'#392b1d'});
-modelText.rotation.x=-Math.PI/2;modelText.position.set(.58,.424,.82);calculator.add(modelText);
+const tiText=textSprite('Texas Instruments',{w:1.25,h:.17,font:'bold 23px Arial',color:'#392b1d'});
+tiText.rotation.x=-Math.PI/2;tiText.position.set(-.53,.424,1.72);calculator.add(tiText);
+const modelText=textSprite('DATAMATH',{w:.78,h:.15,font:'bold 23px Arial',color:'#392b1d'});
+modelText.rotation.x=-Math.PI/2;modelText.position.set(.94,.424,1.72);calculator.add(modelText);
 // Eighteen keys in a TI-2500-style 4-column layout. Equals is orange at bottom-right.
 const keys=[
  ['CE/D','ce',1,1],['÷','op:/',1,2],['×','op:*',1,3],['C','clear',1,4],
@@ -178,9 +178,9 @@ const keyMeshes=[];
 const keyX=[-.90,-.30,.30,.90];
 keys.forEach(([label,action,row,col])=>{
  const wideZero=label==='0',wideEquals=label==='=';
- const x=wideZero?-.60:keyX[col-1],z=.05-(row-1)*.52;
+ const x=wideZero?-.60:keyX[col-1],z=.15-(row-1)*.45;
  const cap=new THREE.Group();cap.position.set(x,.46,z);calculator.add(cap);
- const width=wideZero ? 1.06 : (wideEquals ? 0.46 : 0.46),depth=0.42;
+ const width=wideZero ? 1.06 : (wideEquals ? 0.46 : 0.46),depth=0.37;
  roundedBox(width+.045,.075,depth+.04,.035,edgeMat,cap,0,-.005,0);
  const isFunction=['CE/D','C','÷','×','−','+'].includes(label);
  const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
@@ -191,24 +191,24 @@ keys.forEach(([label,action,row,col])=>{
  cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
 const hatchGroup=new THREE.Group();calculator.add(hatchGroup);
-roundedBox(1.55,.04,1.3,.03,darkMat,hatchGroup,0,-.245,-1.45);
+roundedBox(1.55,.04,1.3,.03,darkMat,hatchGroup,0,-.245,-1.15);
 for(let i=0;i<2;i++){
  const battery=cylinder(.18,.9,mat(i?'#c8c9bd':'#d5c7a4',.32,.2),hatchGroup,i?.36:-.36,-.14,-1.45,32);
  battery.rotation.z=Math.PI/2;
  const end=cylinder(.185,.035,mat('#b6b6a7',.25,.3),hatchGroup,i?.82:-.82,-.14,-1.45,32);end.rotation.z=Math.PI/2;
 }
-const hatch=roundedBox(1.8,.08,1.55,.03,bodyMat,calculator,0,-.13,-1.48);
+const hatch=roundedBox(1.8,.08,1.55,.03,bodyMat,calculator,0,-.13,-1.15);
 hatch.visible=false; hatch.userData.hatch=true;
-const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 19px Arial'});hatchLabel.position.set(0,-.085,-1.48);hatchLabel.rotation.x=-Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
+const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 19px Arial'});hatchLabel.position.set(0,-.085,-1.15);hatchLabel.rotation.x=-Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
 let hatchOpen=false;
 function toggleHatch(){hatchOpen=!hatchOpen;hatch.visible=!hatchOpen;hatchLabel.visible=hatchOpen;hatch.position.y=hatchOpen?-.55:-.13;loadState.textContent=hatchOpen?'BATTERY BAY OPEN':'MODEL READY';}
 document.querySelector('#batteryButton').addEventListener('click',toggleHatch);
 // Back details are modeled as part of the same object and become visible when turned over.
 const backDetails=new THREE.Group();calculator.add(backDetails);
-roundedBox(1.6,.04,1.35,.04,edgeMat,backDetails,0,-.235,-1.48);
-for(let i=0;i<4;i++)cylinder(.055,.025,darkMat,backDetails,i%2?1.25:-1.25,-.235,i<2?2.2:-2.2,16);
+roundedBox(1.6,.04,1.35,.04,edgeMat,backDetails,0,-.235,-1.15);
+for(let i=0;i<4;i++)cylinder(.055,.025,darkMat,backDetails,i%2?1.25:-1.25,-.235,i<2?1.55:-1.55,16);
 const feetMat=mat('#59432f');
-for(const x of [-1.15,1.15])for(const z of [-2.05,2.05])roundedBox(.38,.08,.3,.02,feetMat,calculator,x,-.25,z);
+for(const x of [-1.15,1.15])for(const z of [-1.48,1.48])roundedBox(.38,.08,.3,.02,feetMat,calculator,x,-.25,z);
 
 let soundEnabled=true,audioCtx=null;
 function clickSound(freq=780,duration=.055){
