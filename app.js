@@ -104,7 +104,7 @@ roundedBox(2.03,.018,.57,.025,lensMat,calculator,0,.433,1.62);
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],'.':['dot']};
 const digitGroups=[];
 function makeDigit(x){
- const group=new THREE.Group(); group.position.set(x,.424,1.62); calculator.add(group);
+ const group=new THREE.Group(); group.position.set(x,.451,1.62); calculator.add(group);
  const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
  for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
    const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),new THREE.MeshBasicMaterial({color:0x32100e}));
@@ -120,7 +120,7 @@ const ledDustPositions=new Float32Array(ledDustCount*3);
 const ledDustPhases=new Float32Array(ledDustCount);
 for(let i=0;i<ledDustCount;i++){
   ledDustPositions[i*3]=(Math.random()-.5)*1.95;
-  ledDustPositions[i*3+1]=.447+Math.random()*.09;
+  ledDustPositions[i*3+1]=.458+Math.random()*.025;
   ledDustPositions[i*3+2]=1.62+(Math.random()-.5)*.53;
   ledDustPhases[i]=Math.random()*Math.PI*2;
 }
@@ -135,7 +135,7 @@ glowGradient.addColorStop(0,'rgba(255,48,30,.38)');glowGradient.addColorStop(.35
 glowCtx.fillStyle=glowGradient;glowCtx.fillRect(0,0,64,64);
 const glowTexture=new THREE.CanvasTexture(glowCanvas);
 const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xff4b32,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false}));
-ledGlow.position.set(0,.449,1.62);ledGlow.scale.set(2.1,.63,1);calculator.add(ledGlow);
+ledGlow.position.set(0,.465,1.62);ledGlow.scale.set(2.1,.63,1);calculator.add(ledGlow);
 function setLed(text){
  const str=String(text).slice(0,8); const chars=str.padStart(Math.min(8,str.length),' ');
  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
@@ -152,27 +152,34 @@ function textSprite(text,opts={}){
  const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false});
  const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.3),m);return mesh;
 }
-const tiText=textSprite('Texas Instruments',{w:1.5,h:.28});tiText.position.set(0,.403,.82);calculator.add(tiText);
-const modelText=textSprite('DATAMATH',{w:1.2,h:.22,font:'bold 30px Arial'});modelText.position.set(0,.403,.53);calculator.add(modelText);
-// Eighteen raised keycaps, with interactive hit targets and the familiar 4 x 5 grid shape.
+// Printed branding lies flat on the front face (+Y), so it remains readable in 3D.
+const tiText=textSprite('TEXAS INSTRUMENTS',{w:1.0,h:.16,font:'bold 21px Arial',color:'#392b1d'});
+tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.424,.82);calculator.add(tiText);
+const modelText=textSprite('DATAMATH',{w:.9,h:.16,font:'bold 25px Arial',color:'#392b1d'});
+modelText.rotation.x=-Math.PI/2;modelText.position.set(.58,.424,.82);calculator.add(modelText);
+// Eighteen keys in a TI-2500-style 4-column layout. Equals is orange at bottom-right.
 const keys=[
- ['ON/C','clear'],['CE','ce'],['+/-','sign'],['÷','op:/'],
- ['7','num:7'],['8','num:8'],['9','num:9'],['×','op:*'],
- ['4','num:4'],['5','num:5'],['6','num:6'],['−','op:-'],
- ['1','num:1'],['2','num:2'],['3','num:3'],['+','op:+'],
- ['0','num:0'],['.','decimal'],['=','equals']
+ ['CE/D','ce',1,1],['÷','op:/',1,2],['×','op:*',1,3],['C','clear',1,4],
+ ['7','num:7',2,1],['8','num:8',2,2],['9','num:9',2,3],['−','op:-',2,4],
+ ['4','num:4',3,1],['5','num:5',3,2],['6','num:6',3,3],['+','op:+',3,4],
+ ['1','num:1',4,1],['2','num:2',4,2],['3','num:3',4,3],
+ ['0','num:0',5,1],['.','decimal',5,3],['=','equals',5,4]
 ];
 const keyMeshes=[];
-keys.forEach(([label,action],i)=>{
- const row=Math.floor(i/4),col=i%4,isBottom=row===4,wideZero=isBottom&&label==='0';
- const x=wideZero?-.62:isBottom?(col===1?.62:1.24):(col-1.5)*.62,z=-.38+(2-row)*.67;
- const cap=new THREE.Group();cap.position.set(x,.415,z);calculator.add(cap);const width=wideZero?1.14:.48;
- roundedBox(width+.04,.11,.53,.025,darkMat,cap,0,-.01,0);
- const top=roundedBox(width,.12,.49,.035,label==='='?orangeKeyMat:(i<4?edgeMat:keyMat),cap,0,.055,0);
- const darkLegend=['=','+','−','×','÷','ON/C','CE','+/-'].includes(label);
- const face=textSprite(label,{w:wideZero?.96:.42,h:.2,font:label.length>2?'bold 23px Arial':'bold 38px Arial',color:darkLegend?'#17110c':'#ead4af'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.118,0);cap.add(face);
- cap.userData={label,action,homeY:.415};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
+const keyX=[-.93,-.31,.31,.93];
+keys.forEach(([label,action,row,col])=>{
+ const wideZero=label==='0',wideEquals=label==='=';
+ const x=wideZero?-.62:keyX[col-1],z=.12-(row-1)*.56;
+ const cap=new THREE.Group();cap.position.set(x,.46,z);calculator.add(cap);
+ const width=wideZero?1.10:(wideEquals?.51:.49),depth=wideEquals?.47:.43;
+ roundedBox(width+.045,.075,depth+.04,.035,edgeMat,cap,0,-.005,0);
+ const isFunction=['CE/D','C','÷','×','−','+'].includes(label);
+ const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
+ const top=roundedBox(width,.105,depth,.045,capMaterial,cap,0,.045,0);
+ const darkLegend=!isFunction&&!wideEquals;
+ const face=textSprite(label,{w:wideZero?.92:.40,h:wideZero?.22:.20,font:label.length>2?'bold 21px Arial':'bold 38px Arial',color:darkLegend?'#33271b':'#fff2d9'});
+ face.rotation.x=-Math.PI/2;face.position.set(0,.101,0);cap.add(face);
+ cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
 const hatchGroup=new THREE.Group();calculator.add(hatchGroup);
 roundedBox(1.55,.04,1.3,.03,darkMat,hatchGroup,0,-.245,-1.45);
@@ -220,7 +227,7 @@ document.querySelector('#soundToggle').addEventListener('click',e=>{soundEnabled
 // Arithmetic state machine. It avoids eval() and handles repeated equals, decimals and divide-by-zero.
 let current='0',stored=null,operator=null,waiting=false,lastOperand=null,lastOperator=null;
 const display=document.querySelector('#display');
-function show(){display.textContent=current.length>8?Number(current).toPrecision(7):current;setLed(current);}
+function show(){display.textContent=current;setLed(current);}
 function tidy(n){if(!Number.isFinite(n))return 'Error';if(Math.abs(n)>99999999)return n.toExponential(2);return String(Number(n.toPrecision(8)));}
 function calculate(a,b,op){if(op==='+')return a+b;if(op==='-')return a-b;if(op==='*')return a*b;if(op==='/')return b===0?NaN:a/b;return b;}
 function press(action,label){
@@ -244,9 +251,12 @@ function press(action,label){
  show();
 }
 const keypad=document.querySelector('#keypad');
-keys.forEach(([label,action])=>{
- const b=document.createElement('button');b.className='key'+(['ON/C','CE','+/-'].includes(label)?' utility':'')+(['÷','×','−','+','='].includes(label)?' operator':'');
- b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='ON/C'?'Clear all':label);
+keys.forEach(([label,action,row,col])=>{
+ const b=document.createElement('button');
+ const isFunction=['CE/D','C'].includes(label),isOperator=['÷','×','−','+'].includes(label);
+ b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
+ b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='C'?'Clear all':label);
+ b.style.gridRow=String(row);b.style.gridColumn=label==='0'?'1 / span 2':String(col);
  b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),90);});
  keypad.appendChild(b);
 });
@@ -294,7 +304,7 @@ renderer.setAnimationLoop((time=0)=>{
   controls.update();
   // Animate just 22 particles and one sprite to keep the effect light on integrated graphics.
   const positions=ledDustGeometry.attributes.position.array;
-  for(let i=0;i<ledDustCount;i++)positions[i*3+1]=.447+Math.sin(time*.0011+ledDustPhases[i])*.018;
+  for(let i=0;i<ledDustCount;i++)positions[i*3+1]=.458+Math.sin(time*.0011+ledDustPhases[i])*.008;
   ledDustGeometry.attributes.position.needsUpdate=true;
   ledGlow.material.opacity=.26+Math.sin(time*.002)*.045;
   renderer.render(world,camera);
