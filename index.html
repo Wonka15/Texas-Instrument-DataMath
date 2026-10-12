@@ -86,11 +86,11 @@
       </div>
       <div class="reference-grid">
         <a class="reference-card" href="https://commons.wikimedia.org/wiki/File:Texas_Instruments_TI-2500_Datamath_2nd_Version.jpg" target="_blank" rel="noopener noreferrer">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/0/0e/Texas_Instruments_TI-2500_Datamath_2nd_Version.jpg" alt="Texas Instruments TI-2500 Datamath second version, front view" loading="lazy">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Texas_Instruments_TI-2500_Datamath_2nd_Version.jpg" alt="Texas Instruments TI-2500 Datamath second version, front view" loading="eager" decoding="async" referrerpolicy="no-referrer">
           <span class="reference-caption"><strong>Front / second version</strong><small>Wikimedia Commons · CC BY-SA 4.0</small></span>
         </a>
         <a class="reference-card" href="https://commons.wikimedia.org/wiki/File:Texas_Instruments_TI-2500_Datamath_Version_1_Back_Label.jpg" target="_blank" rel="noopener noreferrer">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/4/4b/Texas_Instruments_TI-2500_Datamath_Version_1_Back_Label.jpg" alt="Texas Instruments TI-2500 Datamath version one rear label" loading="lazy">
+          <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Texas_Instruments_TI-2500_Datamath_Version_1_Back_Label.jpg" alt="Texas Instruments TI-2500 Datamath version one rear label" loading="eager" decoding="async" referrerpolicy="no-referrer">
           <span class="reference-caption"><strong>Rear label / version one</strong><small>Wikimedia Commons · CC BY-SA 4.0</small></span>
         </a>
         <a class="reference-card reference-link-card" href="https://commons.wikimedia.org/wiki/Category:TI-2500" target="_blank" rel="noopener noreferrer">
@@ -104,6 +104,17 @@
     </section>
     <footer><span>DATAMATH OBJECT STUDY</span><span>MADE FOR THE LOVE OF OLD MACHINES <b>✳</b></span><a href="https://github.com/Wonka15/Texas-Instrument-DataMath">VIEW SOURCE ↗</a></footer>
   </main>
+  <script>
+  // Reference images are hosted by Wikimedia Commons, not inside this repository.
+  // If Commons cannot serve an image, keep the source link usable and show a clear fallback.
+  document.querySelectorAll('.reference-card img').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.classList.add('image-unavailable');
+      image.alt = 'Image could not load. Open the Wikimedia Commons source link below.';
+      image.removeAttribute('src');
+    }, { once: true });
+  });
+  </script>
   <script type="importmap">
   {
     "imports": {
