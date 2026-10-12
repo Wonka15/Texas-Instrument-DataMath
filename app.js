@@ -508,7 +508,8 @@ if (navigator.xr) {
 // Android browsers with WebXR use surface detection. iPhone/iPad Safari gets a
 // camera-backed preview because Safari does not currently expose WebXR AR.
 let arHitSource = null;
-let arPlaced = false;
+let arSurfaceQuaternion = new THREE.Quaternion();
+const arRingRotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
 const arOriginalScale = calculator.scale.clone();
 const arOriginalPosition = calculator.position.clone();
 const arOriginalQuaternion = calculator.quaternion.clone();
@@ -548,7 +549,6 @@ async function startWebXRAr() {
     optionalFeatures: ['dom-overlay'],
     domOverlay: { root: document.body }
   });
-  arPlaced = false;
   tabletop.visible = false;
   controls.enabled = false;
   setArHint('Point at a table or floor. Tap the screen to place Datamath.');
@@ -561,10 +561,10 @@ async function startWebXRAr() {
       return;
     }
     calculator.position.copy(arReticle.position);
-    calculator.position.y += 0.025;
-    calculator.quaternion.copy(arReticle.quaternion);
+    // Offset a few millimeters along the detected surface normal to avoid z-fighting.
+    calculator.position.add(new THREE.Vector3(0, 1, 0).applyQuaternion(arSurfaceQuaternion).multiplyScalar(0.014));
+    calculator.quaternion.copy(arSurfaceQuaternion);
     calculator.scale.setScalar(0.045);
-    arPlaced = true;
     setArHint('Placed! Tap another detected surface to reposition.');
   });
   try {
@@ -638,10 +638,12 @@ renderer.setAnimationLoop((time, frame)=>{
       const pose = hits[0].getPose(referenceSpace);
       if (pose) {
         arReticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
-        arReticle.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(pose.transform.matrix));
-        arReticle.visible = !arPlaced;
+        arSurfaceQuaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(pose.transform.matrix));
+        // The ring lies in its local XY plane; rotate it onto the detected surface.
+        arReticle.quaternion.copy(arSurfaceQuaternion).multiply(arRingRotation);
+        arReticle.visible = true;
       }
-    } else if (!arPlaced) {
+    } else {
       arReticle.visible = false;
     }
   }
