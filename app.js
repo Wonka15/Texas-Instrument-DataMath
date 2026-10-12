@@ -62,6 +62,12 @@ const keyLight = new THREE.DirectionalLight(0xffe1b7, 3.0);
 keyLight.position.set(-4, 8, 5); keyLight.castShadow = true; keyLight.shadow.mapSize.set(1024, 1024); world.add(keyLight);
 const rimLight = new THREE.DirectionalLight(0xff543c, 1.4); rimLight.position.set(4, 5, -5); world.add(rimLight);
 const fillLight = new THREE.PointLight(0xb4c5ff, .65, 20); fillLight.position.set(4, 3, 4); world.add(fillLight);
+// A dedicated rear fill light illuminates the battery cover, rear casing, and feet.
+// The calculator's front faces +Y, so its back faces -Y. Without this light,
+// those surfaces can look nearly black when the user orbits around the model.
+const rearFillLight = new THREE.DirectionalLight(0xffd6a0, 2.2);
+rearFillLight.position.set(0, -8, -1);
+world.add(rearFillLight);
 
 const mat = (color, roughness=.65, metalness=0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
 // Fine procedural molded-plastic grain, generated locally without external texture downloads.
@@ -334,7 +340,14 @@ ledSparks.frustumCulled=false;ledSparks.renderOrder=22;calculator.add(ledSparks)
 // LED Studio preset and live controls.
 const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'subtle',reflections:true};
 let displaySegmentFactor=1,darkMode=false,ledPulse=0,lastLedFrame=0;
-const environmentLights=[{light:ambientLight,normal:2.0,dark:.12},{light:keyLight,normal:3.0,dark:.16},{light:rimLight,normal:1.4,dark:.08},{light:fillLight,normal:.65,dark:.035}];
+// Keep the rear light in the same lighting presets so Dark Mode still works.
+const environmentLights=[
+ {light:ambientLight,normal:2.0,dark:.12},
+ {light:keyLight,normal:3.0,dark:.16},
+ {light:rimLight,normal:1.4,dark:.08},
+ {light:fillLight,normal:.65,dark:.035},
+ {light:rearFillLight,normal:2.2,dark:.22}
+];
 // LED brightness always controls the actual display, including in dark mode.
 function effectiveLedBrightness(){return ledStudio.brightness/100;}
 // LED output has a nonlinear boost at the top of the slider so 100% is unmistakably
