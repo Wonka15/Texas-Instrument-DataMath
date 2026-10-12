@@ -1,6 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js';
 import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/webxr/VRButton.js';
+import { RoundedBoxGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/geometries/RoundedBoxGeometry.js';
 
 const sceneEl = document.querySelector('#scene');
 const loadState = document.querySelector('#loadState');
@@ -56,7 +57,8 @@ const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
   // BeveledEdges are represented with small bevels on a BoxGeometry for broad compatibility.
-  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+  const radius=Math.max(0.001,Math.min(r, w/2-0.002, h/2-0.002, d/2-0.002));
+  const mesh=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,radius),material);
   mesh.position.set(x,y,z); mesh.castShadow=true; mesh.receiveShadow=true; parent.add(mesh); return mesh;
 }
 function cylinder(radius,height,material,parent,x,y,z,segments=24){
@@ -112,7 +114,7 @@ const keys=[
 const keyMeshes=[];
 keys.forEach(([label,action],i)=>{
  const col=i%4,row=Math.floor(i/4);
- const x=(col-1.5)*.62,z=.02+(2-row)*.67;
+ const x=(col-1.5)*.62,z=-.38+(2-row)*.67;
  const cap=new THREE.Group();cap.position.set(x,.415,z);calculator.add(cap);
  roundedBox(.52,.11,.53,.02,darkMat,cap,0,-.01,0);
  const top=roundedBox(.48,.12,.49,.02,(i<4?edgeMat:keyMat),cap,0,.055,0);
@@ -141,15 +143,24 @@ const feetMat=mat('#59432f');
 for(const x of [-1.15,1.15])for(const z of [-2.05,2.05])roundedBox(.38,.08,.3,.02,feetMat,calculator,x,-.25,z);
 
 let soundEnabled=true,audioCtx=null;
-function clickSound(freq=780,duration=.035){
+function clickSound(freq=780,duration=.055){
  if(!soundEnabled)return;
  try{
   audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended')audioCtx.resume();
-  const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
-  osc.type='triangle';osc.frequency.setValueAtTime(freq,audioCtx.currentTime);
-  gain.gain.setValueAtTime(.0001,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.055,audioCtx.currentTime+.003);gain.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);
-  osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration+.01);
+  const now=audioCtx.currentTime;
+  // A soft mechanical thunk plus a crisp, short plastic-key tick.
+  const body=audioCtx.createOscillator(),bodyGain=audioCtx.createGain();
+  body.type='triangle';body.frequency.setValueAtTime(175,now);body.frequency.exponentialRampToValueAtTime(82,now+.045);
+  bodyGain.gain.setValueAtTime(.0001,now);bodyGain.gain.exponentialRampToValueAtTime(.11,now+.003);bodyGain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+  body.connect(bodyGain);bodyGain.connect(audioCtx.destination);body.start(now);body.stop(now+duration+.005);
+  const length=Math.max(1,Math.floor(audioCtx.sampleRate*.018));
+  const buffer=audioCtx.createBuffer(1,length,audioCtx.sampleRate),data=buffer.getChannelData(0);
+  for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
+  const noise=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),tickGain=audioCtx.createGain();
+  noise.buffer=buffer;filter.type='highpass';filter.frequency.value=1800;
+  tickGain.gain.setValueAtTime(.0001,now);tickGain.gain.exponentialRampToValueAtTime(.045,now+.001);tickGain.gain.exponentialRampToValueAtTime(.0001,now+.018);
+  noise.connect(filter);filter.connect(tickGain);tickGain.connect(audioCtx.destination);noise.start(now);noise.stop(now+.02);
  }catch(e){/* Audio is an enhancement; calculator remains usable if blocked. */}
 }
 document.querySelector('#soundToggle').addEventListener('click',e=>{soundEnabled=!soundEnabled;e.currentTarget.textContent=soundEnabled?'♫ SOUND ON':'♫ SOUND OFF';e.currentTarget.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)clickSound(950,.06);});
