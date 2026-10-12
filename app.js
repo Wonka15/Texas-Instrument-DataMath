@@ -646,13 +646,20 @@ function press(action,label){
 const keypad=document.querySelector('#keypad');
 if(!window.__datamathFallbackActive){
  keys.forEach(([label,action,row,col])=>{
-  const b=document.createElement('button');
+  // Reuse the server-rendered buttons so the 2D keypad is visible even before Three.js loads.
+  let b=Array.from(keypad.children).find(button=>button.dataset.action===action);
+  if(!b){
+   b=document.createElement('button');
+   keypad.appendChild(b);
+  }
   const isFunction=['CE/D','C'].includes(label),isOperator=['÷','×','−','+'].includes(label);
   b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
   b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='C'?'Clear all':label);
   b.style.gridRow=String(row);b.style.gridColumn=label==='0'?'1 / span 2':String(col);
-  b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),90);});
-  keypad.appendChild(b);
+  b.addEventListener('click',()=>{
+   press(action,label);b.classList.add('pressed');
+   setTimeout(()=>b.classList.remove('pressed'),90);
+  });
  });
  window.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
