@@ -107,18 +107,18 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
 roundedBox(3.28,.48,4.02,.19,edgeMat,calculator,0,0,0);
 roundedBox(3.17,.38,3.91,.16,bodyMat,calculator,0,.19,0);
 
-// Thin raised bezel surrounding the LED window. Offset the display toward the right side of the face.
-roundedBox(2.30,.075,.78,.065,edgeMat,calculator,.38,.405,.88);
-roundedBox(2.16,.022,.61,.035,mat('#160a08',.24),calculator,.38,.449,.88);
-roundedBox(2.22,.09,.12,.04,bodyMat,calculator,.38,.445,1.20);
-roundedBox(.12,.09,.68,.04,bodyMat,calculator,-.69,.445,.88);
-roundedBox(.12,.09,.68,.04,bodyMat,calculator,1.45,.445,.88);
+// Thin raised bezel surrounding the LED window.
+roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
+roundedBox(2.48,.022,.61,.035,mat('#160a08',.24),calculator,0,.449,.88);
+roundedBox(2.54,.09,.12,.04,bodyMat,calculator,0,.445,1.20);
+roundedBox(.12,.09,.68,.04,bodyMat,calculator,-1.22,.445,.88);
+roundedBox(.12,.09,.68,.04,bodyMat,calculator,1.22,.445,.88);
 
 // Seven-segment LED digits. Segments are attached just above the display lens.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
 function makeDigit(x){
- const group=new THREE.Group();group.position.set(x+.38,.467,.88);calculator.add(group);
+ const group=new THREE.Group();group.position.set(x,.467,.88);calculator.add(group);
  const specs={a:[0,.12,.145,.026],g:[0,0,.145,.026],d:[0,-.12,.145,.026],f:[-.075,.06,.026,.095],b:[.075,.06,.026,.095],e:[-.075,-.06,.026,.095],c:[.075,-.06,.026,.095],dot:[.095,-.13,.022,.022]};
  for(const [name,[sx,sz,sw,sh]] of Object.entries(specs)){
    const mesh=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),ledOffMat);
@@ -148,9 +148,9 @@ function textSprite(text,opts={}){
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
 }
 const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
-tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
+tiText.rotation.x=Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
 const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'900 42px Arial'});
-modelText.rotation.x=-Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
+modelText.rotation.x=Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
 
 // Recessed keypad panel, with evenly spaced rows and generous margins.
 roundedBox(2.76,.065,2.42,.085,darkMat,calculator,0,.405,-.67);
@@ -172,7 +172,7 @@ keys.forEach(([label,action,row,col])=>{
  const faceMat=isEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
  const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 82px Arial':'900 150px Arial',color:'#080604'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
+ face.rotation.x=Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
  cap.userData={label,action,homeY:.455};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
 });
 
