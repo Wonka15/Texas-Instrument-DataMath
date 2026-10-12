@@ -18,22 +18,24 @@
       <div class="intro">
         <p class="eyebrow">POCKET-SIZED REVOLUTION</p>
         <h1>A little piece<br>of <em>computing history.</em></h1>
-        <p class="lede">Explore a Datamath-inspired calculator in true orthographic inspection views. Switch between face, rear, left, right, and end-on views, press the keys, and listen to the tactile clicks.</p>
+        <p class="lede">Explore a Datamath-inspired calculator in 3D. Drag to orbit, use the four viewport arrows for precise rotation, press the keys, and listen to the tactile clicks.</p>
         <div class="hint"><span class="mouse-icon">↻</span> DRAG TO ROTATE <span class="hint-sep">·</span> SCROLL TO ZOOM</div>
       </div>
       <div class="scene-wrap">
-        <div class="scene-label"><span>01 / OBJECT VIEW</span><span id="viewLabel">FRONT · 3D</span></div>
+        <div class="scene-label"><span>01 / OBJECT VIEW</span><span id="viewLabel">3D ORBIT VIEW</span></div>
         <div id="scene" role="img" aria-label="Interactive three-dimensional vintage calculator model"></div>
-        <div class="scene-controls">
-          <button id="homeView" title="Reset camera">↺ <span>RESET VIEW</span></button>
-          <button id="flipView" title="Turn model around">◉ <span>TURN OVER</span></button>
-          <button id="batteryButton" title="Open battery compartment">▣ <span>BATTERY BAY</span></button>
-          <button data-ortho-view="face" title="Orthographic face view">▦ <span>FACE</span></button>
-          <button data-ortho-view="left" title="Orthographic left side view">◧ <span>LEFT</span></button>
-          <button data-ortho-view="right" title="Orthographic right side view">◨ <span>RIGHT</span></button>
-          <button data-ortho-view="top" title="Orthographic top edge view">↑ <span>TOP EDGE</span></button>
-          <button data-ortho-view="bottom" title="Orthographic bottom edge view">↓ <span>BOTTOM EDGE</span></button>
-          <button id="vrButton" title="Enter VR when supported" disabled>◇ <span>VR UNAVAILABLE</span></button>
+        <div class="scene-toolbar">
+          <div class="orbit-pad" role="group" aria-label="Rotate calculator viewport">
+            <button class="orbit-up" data-orbit="up" title="Orbit up" aria-label="Orbit up">↑</button>
+            <button class="orbit-left" data-orbit="left" title="Orbit left" aria-label="Orbit left">←</button>
+            <button class="orbit-home" id="homeView" title="Reset view" aria-label="Reset view">•</button>
+            <button class="orbit-right" data-orbit="right" title="Orbit right" aria-label="Orbit right">→</button>
+            <button class="orbit-down" data-orbit="down" title="Orbit down" aria-label="Orbit down">↓</button>
+          </div>
+          <div class="scene-controls">
+            <button id="batteryButton" title="Open battery compartment">▣ <span>BATTERY BAY</span></button>
+            <button id="vrButton" title="Enter VR when supported" disabled>◇ <span>VR UNAVAILABLE</span></button>
+          </div>
         </div>
         <div class="scene-foot"><span>MODEL: DATAMATH-STYLE / INTERACTIVE STUDY</span><span id="loadState">INITIALIZING 3D…</span></div>
       </div>
