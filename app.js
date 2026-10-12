@@ -30,7 +30,7 @@ controls.enableDamping = true;
 controls.dampingFactor = .06;
 controls.minDistance = 5;
 controls.maxDistance = 16;
-controls.maxPolarAngle = Math.PI * .86;
+controls.maxPolarAngle = Math.PI; // Permit an exact rear/bottom orthographic inspection view.
 
 world.add(new THREE.HemisphereLight(0xffe4c0, 0x21170f, 2.0));
 const keyLight = new THREE.DirectionalLight(0xffe1b7, 3.0);
