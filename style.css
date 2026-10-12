@@ -257,3 +257,13 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .datamath-dark-mode .display-mode-actions button[aria-pressed="true"]{
  box-shadow:0 0 5px rgb(255 138 56 / calc(.04 * (1 - var(--led-brightness, 0)))),inset 0 0 4px #ff81330b;
 }
+
+
+/* Visible recovery notice when the optional WebGL/Three.js scene cannot initialize. */
+.render-fallback-notice{
+ position:absolute;z-index:5;left:14px;right:14px;top:50%;transform:translateY(-50%);
+ padding:16px 18px;border:1px solid #8b6848;border-radius:8px;
+ background:rgba(24,17,12,.94);color:#f1dfc5;
+ font:12px/1.7 'DM Sans',sans-serif;text-align:center;
+ box-shadow:0 10px 35px #0008;backdrop-filter:blur(8px);
+}
