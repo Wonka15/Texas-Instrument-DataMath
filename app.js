@@ -180,7 +180,9 @@ for(let i=0;i<8;i++){
  topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
  const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
  const glyphCanvas=document.createElement('canvas');glyphCanvas.width=192;glyphCanvas.height=240;
- drawNixieGlyph(glyphCanvas,'0',effectiveLedBrightness());
+ // Use the default slider value while building the initial tube; ledStudio is initialized below.
+  // The live brightness is applied by setNixieDigits() after startup completes.
+  drawNixieGlyph(glyphCanvas,'0',0.78);
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
