@@ -119,7 +119,7 @@ const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],
 const digitGroups=[];
 function makeDigit(x){
  const group=new THREE.Group();group.position.set(x,.467,.88);calculator.add(group);
- const specs={a:[0,.12,.145,.026],g:[0,0,.145,.026],d:[0,-.12,.145,.026],f:[-.075,.06,.026,.095],b:[.075,.06,.026,.095],e:[-.075,-.06,.026,.095],c:[.075,-.06,.026,.095],dot:[.095,-.13,.022,.022]};
+ const specs={a:[0,.12,.145,.026],g:[0,0,.145,.026],d:[0,-.12,.145,.026],f:[.075,.06,.026,.095],b:[-.075,.06,.026,.095],e:[.075,-.06,.026,.095],c:[-.075,-.06,.026,.095],dot:[-.095,-.13,.022,.022]};
  for(const [name,[sx,sz,sw,sh]] of Object.entries(specs)){
    const mesh=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),ledOffMat);
    mesh.position.set(sx,0,sz);mesh.renderOrder=20;group.add(mesh);group.userData[name]=mesh;
@@ -127,7 +127,8 @@ function makeDigit(x){
  digitGroups.push(group);
 }
 // Keep the numeral row aligned toward the right, like the live 2D calculator display.
-for(let i=0;i<8;i++)makeDigit(-.85+i*.26);
+// Camera-right runs opposite world X in this front-facing view, so reverse the digit-group order.
+for(let i=0;i<8;i++)makeDigit(.97-i*.26);
 function setLed(text){
  const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
@@ -143,7 +144,10 @@ function textSprite(text,opts={}){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,512,128);
  ctx.fillStyle=opts.color||'#24180f';ctx.font=opts.font||'bold 34px Arial';
- ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,64);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ // The face is viewed from the back side of these top-facing planes in this coordinate system.
+ // Counter-flip the texture on both axes so the printed text reads normally in 3D.
+ ctx.save();ctx.translate(512,128);ctx.scale(-1,-1);ctx.fillText(text,256,64);ctx.restore();
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
