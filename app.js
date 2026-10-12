@@ -609,7 +609,9 @@ function press(action,label){
  show();
 }
 const keypad=document.querySelector('#keypad');
-keys.forEach(([label,action,row,col])=>{
+// A standalone fallback may have populated the keypad if this module was delayed.
+// Do not duplicate its buttons when the 3D module eventually finishes loading.
+if (!window.__datamathFallbackActive) keys.forEach(([label,action,row,col])=>{
  const b=document.createElement('button');
  const isFunction=['CE/D','C'].includes(label),isOperator=['÷','×','−','+'].includes(label);
  b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
