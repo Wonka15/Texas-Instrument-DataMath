@@ -177,7 +177,6 @@ const tableReflection=new THREE.Mesh(new THREE.PlaneGeometry(4.5,4.5),
  new THREE.MeshBasicMaterial({map:makeTableReflectionTexture(),transparent:true,opacity:.9,
  blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
 tableReflection.rotation.x=-Math.PI/2;tableReflection.position.set(0,-.292,.22);tableReflection.renderOrder=2;world.add(tableReflection);
-
 // Tiny floating phosphor sparks. Positions stay in the display's local coordinate
 // space so the effect follows the calculator naturally when the model is rotated.
 const sparkCount=54;
@@ -293,7 +292,8 @@ function wireLedStudio(){
  style.addEventListener('change',()=>{ledStudio.style=style.value;applyLedStudio();});
  brightness.addEventListener('input',()=>{ledStudio.brightness=Number(brightness.value);brightnessValue.textContent=ledStudio.brightness+'%';applyLedStudio();});
  particles.addEventListener('change',()=>{ledStudio.particles=particles.value;applyLedStudio();});
- flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;applyLedStudio();});
+ flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');applyLedStudio();});
+ document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');
  reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
  darkToggle.addEventListener('click',()=>setDarkMode(!darkMode));
  applyLedStudio();
@@ -357,8 +357,7 @@ keys.forEach(([label,action,row,col])=>{
 });
 
 // Battery cover and rear details are kept below the face and do not intrude into the keypad.
-roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);
-const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
+roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
 hatch.visible=false;hatch.userData.hatch=true;
 const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial',flipX:false});
 hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
@@ -537,8 +536,7 @@ function restoreAfterAr() {
   tabletop.visible = true;
   calculator.scale.copy(arOriginalScale);
   calculator.position.copy(arOriginalPosition);
-  calculator.quaternion.copy(arOriginalQuaternion);
-  controls.enabled = true;
+  calculator.quaternion.copy(arOriginalQuaternion);  controls.enabled = true;
   setArButtonState(false, 'AR MODE');
   setArHint('', false);
   loadState.textContent = 'MODEL READY';
