@@ -65,7 +65,7 @@ const orangeKeyMat = new THREE.MeshPhysicalMaterial({color:'#d76a2c',roughness:.
 const inkMat = mat('#38281b', .65);
 const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c',depthTest:false,toneMapped:false });
 const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e',depthTest:false,toneMapped:false });
-const lensMat = new THREE.MeshPhysicalMaterial({ color:'#35120f', roughness:.2, metalness:0, transparent:true, opacity:.10, transmission:0, thickness:.01, clearcoat:.7, clearcoatRoughness:.12, depthWrite:false });
+const lensMat = new THREE.MeshBasicMaterial({ color:'#160807', depthWrite:true, depthTest:true });
 const whiteMat = mat('#e5d3b2', .5);
 function makeWoodTexture(){
  const c=document.createElement('canvas');c.width=1024;c.height=1024;const g=c.getContext('2d');
@@ -110,8 +110,8 @@ function makeDigit(x){
  const group=new THREE.Group(); group.position.set(x,.451,1.62); calculator.add(group);
  const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
  for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
-   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.009,sh),new THREE.MeshBasicMaterial({color:0x32100e,depthTest:false,toneMapped:false}));
-   s.position.set(sx,0,sy); s.renderOrder=20; group.add(s); group.userData[name]=s;
+   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.009,sh),new THREE.MeshBasicMaterial({color:0x32100e,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
+   s.position.set(sx,0,sy); s.renderOrder=50; group.add(s); group.userData[name]=s;
  }
  digitGroups.push(group); return group;
 }
@@ -149,7 +149,7 @@ function setLed(text){
   digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
     const ch=chars[i]||' ';
     const on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
-    mesh.material=on?ledMat:ledOffMat;mesh.material.depthTest=false;mesh.material.toneMapped=false;mesh.renderOrder=20;
+    mesh.material=on?ledMat:ledOffMat;mesh.material.depthTest=false;mesh.material.depthWrite=false;mesh.material.transparent=true;mesh.material.toneMapped=false;mesh.renderOrder=50;
   }));
 }
 // Small printed wordmark and model text on the face.
@@ -186,8 +186,8 @@ keys.forEach(([label,action,row,col])=>{
  const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.105,depth,.045,capMaterial,cap,0,.045,0);
  const darkLegend=!isFunction&&!wideEquals;
- const face=textSprite(label,{w:wideZero ? 0.92 : 0.40,h:wideZero ? 0.22 : 0.20,font:label.length>2?'bold 21px Arial':'bold 38px Arial',color:darkLegend?'#33271b':'#fff2d9'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.112,0);face.renderOrder=40;cap.add(face);
+ const face=textSprite(label,{w:wideZero ? 0.98 : 0.43,h:wideZero ? 0.25 : 0.25,font:label.length>2?'900 30px Arial':'900 58px Arial',color:'#080604'});
+ face.rotation.x=-Math.PI/2;face.position.set(0,.114,0);face.renderOrder=60;cap.add(face);
  cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
 const hatchGroup=new THREE.Group();calculator.add(hatchGroup);
@@ -280,9 +280,17 @@ show();
 // Raycast 3D keycaps so the physical model is also pressable.
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 renderer.domElement.addEventListener('pointerdown',e=>{
- const rect=renderer.domElement.getBoundingClientRect();pointer.x=((e.clientX-rect.left)/rect.width)*2-1;pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
- raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(pickables,false)[0];
- if(hit?.object?.userData?.key){const k=hit.object.userData.key;press(k.userData.action,k.userData.label);k.position.y=k.userData.homeY-.045;setTimeout(()=>k.position.y=k.userData.homeY,90);}
+ if(e.button!==0)return;
+ const rect=renderer.domElement.getBoundingClientRect();
+ pointer.x=((e.clientX-rect.left)/rect.width)*2-1;
+ pointer.y=-((e.clientY-rect.top)/rect.height)*2+1;
+ raycaster.setFromCamera(pointer,camera);
+ const hit=raycaster.intersectObjects(pickables,true).find(item=>item.object.userData.key);
+ if(!hit)return;
+ const k=hit.object.userData.key;
+ press(k.userData.action,k.userData.label);
+ k.position.y=k.userData.homeY-.045;
+ setTimeout(()=>{k.position.y=k.userData.homeY;},90);
 });
 function setOrthoView(name){
   calculator.rotation.set(0,0,0);
@@ -302,9 +310,19 @@ function setOrthoView(name){
   controls.target.set(0,0,0);controls.update();
   viewLabel.textContent=({face:'FACE · ORTHO',rear:'REAR · ORTHO',left:'LEFT · ORTHO',right:'RIGHT · ORTHO',top:'TOP EDGE · ORTHO',bottom:'BOTTOM EDGE · ORTHO'})[name];
 }
-document.querySelector('#homeView').addEventListener('click',()=>{camera.up.set(0,1,0);camera.position.copy(initialCamera);camera.zoom=1;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='3/4 · ORTHO';});
-document.querySelector('#flipView').addEventListener('click',()=>setOrthoView('rear'));
-document.querySelectorAll('[data-ortho-view]').forEach(button=>button.addEventListener('click',()=>setOrthoView(button.dataset.orthoView)));
+function resetView(){
+ camera.up.set(0,1,0);camera.position.copy(initialCamera);camera.zoom=1;camera.updateProjectionMatrix();
+ controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='3D ORBIT VIEW';
+}
+document.querySelector('#homeView').addEventListener('click',resetView);
+document.querySelectorAll('[data-orbit]').forEach(button=>button.addEventListener('click',()=>{
+ const step=Math.PI/12;
+ if(button.dataset.orbit==='left')controls.rotateLeft(step);
+ if(button.dataset.orbit==='right')controls.rotateLeft(-step);
+ if(button.dataset.orbit==='up')controls.rotateUp(step);
+ if(button.dataset.orbit==='down')controls.rotateUp(-step);
+ controls.update();viewLabel.textContent='3D ORBIT VIEW';
+}));
 const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrButton.style.display='none';document.body.appendChild(vrButton);
 if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
 function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
