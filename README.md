@@ -8,6 +8,24 @@ Works on desktop and mobile. Camera features require HTTPS and permission; track
 
 A browser-based, Three.js tribute to the 1970s Texas Instruments Datamath calculator. This first working version includes a walnut-toned studio scene, procedural 3D calculator geometry, interactive keys, a red LED-style display, generated key clicks, and a simulated battery bay.
 
+## Working checkpoint
+
+The known-good working state from 12 October 2026 is preserved on the
+[state-a-working branch](https://github.com/Wonka15/Texas-Instrument-DataMath/tree/state-a-working).
+Continue polishing on main; use that branch as the reference point if a later
+change needs to be compared or rolled back.
+
+## Beginner code map
+
+- index.html contains the page structure, accessible controls, reference-photo cards, and a small 2D-calculator fallback.
+- style.css controls layout, colors, responsive behavior, and visual effects. Some later polish rules intentionally override earlier base rules; change the final matching rule carefully to preserve the established appearance.
+- app.js builds the Three.js model, wires controls, updates the display, and handles audio, AR, and VR. Section comments mark the main systems.
+- The fallback calculator in index.html duplicates a small amount of arithmetic logic on purpose: it keeps the keypad usable if the external 3D module cannot load.
+
+## Reference-photo troubleshooting
+
+The reference cards load photos from Wikimedia Commons using its file redirect, while each card links to the source page. Remote photos depend on Commons being reachable; if a photo fails, the card now displays a helpful fallback instead of a broken-image icon. GitHub Pages paths and file names are case-sensitive, so local assets must match their exact spelling and capitalization.
+
 ## Run locally
 
 Serve the project over HTTP because it uses JavaScript modules:
