@@ -30,3 +30,10 @@
 .key.utility,.key.operator{text-shadow:0 1px #0002}
 .key.operator:last-child{font-weight:700}
 @media(max-width:650px){.keypad{grid-template-rows:repeat(5,minmax(50px,auto))}}
+
+/* Stronger contrast for 3D and flat keypad labels; maintain a clean, even five-row grid. */
+.keypad{grid-template-rows:repeat(5,minmax(52px,auto));align-items:stretch;}
+.key{display:flex;align-items:center;justify-content:center;line-height:1;letter-spacing:0;font-weight:700;text-shadow:none;}
+.key.utility,.key.operator{font-size:15px;}
+.key.operator:last-child{background:linear-gradient(160deg,#ffb35f,#e36c2d);color:#21150c;}
+@media(max-width:650px){.keypad{grid-template-rows:repeat(5,minmax(52px,auto));}.key{font-size:16px;}.key.utility,.key.operator{font-size:14px;}}
