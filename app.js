@@ -197,7 +197,7 @@ for(let i=0;i<8;i++){
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#fff0c6',transparent:true,opacity:1,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.238,.292),glyphMaterial);
- glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
+ glyph.rotation.x=Math.PI/2;glyph.position.set(0,.55,0); // Keep the active numeral inside the glass envelope, below the top ring.glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
 }
@@ -216,7 +216,7 @@ function setNixieDigits(chars,dotSlot){
   let dot=tube.userData.decimalDot;
   if(!dot){
    dot=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),new THREE.MeshBasicMaterial({color:'#ff7b37',toneMapped:false}));
-   dot.position.set(-.065,.606,-.105);dot.renderOrder=28;tube.add(dot);tube.userData.decimalDot=dot;
+   dot.position.set(-.065,.555,-.105);dot.renderOrder=28;tube.add(dot);tube.userData.decimalDot=dot;
   }
   dot.visible=nixieMode&&i===dotSlot&&active!==' ';
  });
