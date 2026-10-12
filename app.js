@@ -171,13 +171,13 @@ keys.forEach(([label,action,row,col])=>{
  const wideZero=label==='0',wideEquals=label==='=';
  const x=wideZero?-.62:keyX[col-1],z=.12-(row-1)*.56;
  const cap=new THREE.Group();cap.position.set(x,.46,z);calculator.add(cap);
- const width=wideZero?1.10:(wideEquals?.51:.49),depth=wideEquals?.47:.43;
+ const width=wideZero ? 1.10 : (wideEquals ? 0.51 : 0.49),depth=wideEquals ? 0.47 : 0.43;
  roundedBox(width+.045,.075,depth+.04,.035,edgeMat,cap,0,-.005,0);
  const isFunction=['CE/D','C','÷','×','−','+'].includes(label);
  const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.105,depth,.045,capMaterial,cap,0,.045,0);
  const darkLegend=!isFunction&&!wideEquals;
- const face=textSprite(label,{w:wideZero?.92:.40,h:wideZero?.22:.20,font:label.length>2?'bold 21px Arial':'bold 38px Arial',color:darkLegend?'#33271b':'#fff2d9'});
+ const face=textSprite(label,{w:wideZero ? 0.92 : 0.40,h:wideZero ? 0.22 : 0.20,font:label.length>2?'bold 21px Arial':'bold 38px Arial',color:darkLegend?'#33271b':'#fff2d9'});
  face.rotation.x=-Math.PI/2;face.position.set(0,.101,0);cap.add(face);
  cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
