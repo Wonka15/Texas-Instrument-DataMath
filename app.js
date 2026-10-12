@@ -152,7 +152,7 @@ const nixieTubes=[];
 const nixieDigitMaterials=[];
 const nixieGlyphCanvases=[];
 const nixieGlyphTextures=[];
-function drawNixieGlyph(canvas,activeDigit){
+function drawNixieGlyph(canvas,activeDigit,brightness=1){
  const ctx=canvas.getContext('2d');
  ctx.clearRect(0,0,canvas.width,canvas.height);
  ctx.textAlign='center';ctx.textBaseline='middle';
@@ -161,8 +161,8 @@ function drawNixieGlyph(canvas,activeDigit){
   ctx.save();
   ctx.font='bold 190px Georgia, serif';
   ctx.shadowColor=String(digit)===String(activeDigit)?'#fff0bd':'#ff6b27';
-  ctx.shadowBlur=String(digit)===String(activeDigit)?26:3;
-  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,248,218,1)':'rgba(255,124,54,.12)';
+  ctx.shadowBlur=String(digit)===String(activeDigit)?4+22*brightness:2;
+  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,248,218,'+(0.12+0.88*brightness)+')':'rgba(255,124,54,.09)';
   ctx.fillText(String(digit),96+(digit%3-1)*1.4,120+(digit%4-1.5)*.8);
   ctx.restore();
  }
@@ -180,7 +180,7 @@ for(let i=0;i<8;i++){
  topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
  const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
  const glyphCanvas=document.createElement('canvas');glyphCanvas.width=192;glyphCanvas.height=240;
- drawNixieGlyph(glyphCanvas,'0');
+ drawNixieGlyph(glyphCanvas,'0',effectiveLedBrightness());
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
@@ -196,10 +196,10 @@ function setNixieDigits(chars,dotSlot){
   const glyph=tube.children.find(child=>child.isMesh&&child.geometry.type==='PlaneGeometry');
   if(!glyph)return;
   const material=glyph.material;
-  drawNixieGlyph(nixieGlyphCanvases[i],active);
+  drawNixieGlyph(nixieGlyphCanvases[i],active,effectiveLedBrightness());
   nixieGlyphTextures[i].needsUpdate=true;
   material.color.set('#ff9b54');
-  material.opacity=active===' '?0:1;
+  material.opacity=active===' '?0:.15+.85*effectiveLedBrightness();
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
   if(!dot){
@@ -333,7 +333,7 @@ function setDarkMode(enabled){
   if(face?.userData?.labelCanvas&&face.material?.map){
    const canvas=face.userData.labelCanvas,ctx=canvas.getContext('2d'),opts=face.userData.labelOptions||{};
    ctx.clearRect(0,0,canvas.width,canvas.height);
-   ctx.fillStyle=darkMode?(action==='equals'?'#ffe0b5':action==='clear'||action==='ce'?'#ffd2aa':action.startsWith('op:')?'#f5c8a1':'#f4e1ca'):(opts.color||'#080604');
+   ctx.fillStyle=darkMode?(action==='equals'?'#d9b18c':action==='clear'||action==='ce'?'#d2a17c':action.startsWith('op:')?'#d0a27e':'#c7b099'):(opts.color||'#080604');
    ctx.font=opts.font||'bold 34px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
    if(opts.flipX===false)ctx.fillText(face.userData.labelText,256,64);
    else{ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(face.userData.labelText,256,64);ctx.restore();}
@@ -408,7 +408,7 @@ function animateLedEffects(timeMs){
  const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive()*pulse);
  if(nixieMode){
-  nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.58+b*.5+(ledStudio.flicker==='vintage'?(pulse<.8?.12:0):0));});
+  nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.15+.85*b+(ledStudio.flicker==='vintage'?(pulse<.8?.08:0):0));});
  }
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
  displayBloomLayers.forEach((layer,i)=>{
