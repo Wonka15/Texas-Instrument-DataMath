@@ -398,7 +398,7 @@ function applyLedStudio(){
  });
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
- ledSparks.visible=ledStudio.particles!=='off';
+ ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  sparkMaterial.size=ledStudio.particles==='ambient'?.075:futuristic?.06:.042;
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.94:ledStudio.particles==='reactive'?.82:0;
 }
@@ -443,6 +443,8 @@ function animateLedEffects(timeMs){
  ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?.9:.6))*displaySegmentFactor;
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*pulse*displaySegmentFactor*(futuristic?1.35:1);
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.94:ledStudio.particles==='reactive'?.22+ledPulse*.62:0;
+ // Nixie mode is a separate display treatment; never let the animation loop re-enable LED sparks over it.
+ ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  updateLightingBalance();
 for(let i=0;i<sparkCount;i++){
   const k=i*3;
