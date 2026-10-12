@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17130f">
+  <meta name="description" content="An interactive, browser-based tribute to the 1970s Texas Instruments Datamath calculator.">
+  <title>Datamath — A 3D Calculator</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="wordmark" href="./" aria-label="Datamath home"><span class="mark">TI</span><span>DATAMATH <small>OBJECT STUDY / 1970s</small></span></a>
+      <div class="top-actions"><span class="live-dot"></span><span class="status">INTERACTIVE MODEL</span><button id="soundToggle" class="small-button" aria-pressed="true">♫ SOUND ON</button></div>
+    </header>
+    <section class="hero">
+      <div class="intro">
+        <p class="eyebrow">POCKET-SIZED REVOLUTION</p>
+        <h1>A little piece<br>of <em>computing history.</em></h1>
+        <p class="lede">Explore a lovingly recreated Datamath-inspired calculator. Turn it in the light, press the keys, and listen to the tactile clicks.</p>
+        <div class="hint"><span class="mouse-icon">↻</span> DRAG TO ROTATE <span class="hint-sep">·</span> SCROLL TO ZOOM</div>
+      </div>
+      <div class="scene-wrap">
+        <div class="scene-label"><span>01 / OBJECT VIEW</span><span id="viewLabel">FRONT · 3D</span></div>
+        <div id="scene" role="img" aria-label="Interactive three-dimensional vintage calculator model"></div>
+        <div class="scene-controls">
+          <button id="homeView" title="Reset camera">↺ <span>RESET VIEW</span></button>
+          <button id="flipView" title="Turn model around">◉ <span>TURN OVER</span></button>
+          <button id="batteryButton" title="Open battery compartment">▣ <span>BATTERY BAY</span></button>
+          <button id="vrButton" title="Enter VR when supported" disabled>◇ <span>VR UNAVAILABLE</span></button>
+        </div>
+        <div class="scene-foot"><span>MODEL: DATAMATH-STYLE / INTERACTIVE STUDY</span><span id="loadState">INITIALIZING 3D…</span></div>
+      </div>
+    </section>
+    <section class="lower">
+      <div class="calculator-panel">
+        <div class="panel-heading"><div><p class="eyebrow">02 / MAKE IT COMPUTE</p><h2>Press a few buttons.</h2></div><span class="panel-index">01—18</span></div>
+        <div class="physical-calculator">
+          <div class="brandline"><span class="brand">Texas Instruments</span><span class="model">DATAMATH</span></div>
+          <div class="display-frame"><span class="display-caption">LED DISPLAY</span><div id="display" class="led" aria-live="polite">0</div><span class="display-glow"></span></div>
+          <div id="keypad" class="keypad" aria-label="Calculator keypad"></div>
+          <div class="calc-footer"><span>HANDHELD ELECTRONIC CALCULATOR</span><span>VINTAGE STUDY</span></div>
+        </div>
+        <p class="panel-note">Use the on-screen keys or your keyboard. Supports addition, subtraction, multiplication, division, decimals, sign toggle, clear entry and clear.</p>
+      </div>
+      <aside class="details-panel">
+        <p class="eyebrow">03 / OBJECT NOTES</p><h2>Form follows function.</h2>
+        <p class="detail-copy">Warm molded plastic, a compact face, sculpted keys and the unmistakable red glow of seven-segment numerals. This is an interactive homage, with the geometry built in code—not a photograph pretending to be 3D.</p>
+        <div class="spec-list">
+          <div><span>DISPLAY</span><strong>Red LED-style digits</strong></div>
+          <div><span>INPUT</span><strong>Clickable 18-key layout</strong></div>
+          <div><span>BODY</span><strong>Procedural 3D mesh</strong></div>
+          <div><span>POWER</span><strong>Simulated battery bay</strong></div>
+          <div><span>EXPERIENCE</span><strong>Desktop · touch · WebXR*</strong></div>
+        </div>
+        <p class="fine-print">*WebXR requires a compatible browser/device and a secure context. This first model is a carefully styled interpretation; dimensional and component details should be refined against verified reference photographs of the exact TI-2500 variant.</p>
+      </aside>
+    </section>
+    <footer><span>DATAMATH OBJECT STUDY</span><span>MADE FOR THE LOVE OF OLD MACHINES <b>✳</b></span><a href="https://github.com/Wonka15/Texas-Instrument-DataMath">VIEW SOURCE ↗</a></footer>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
