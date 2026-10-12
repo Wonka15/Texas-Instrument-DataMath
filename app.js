@@ -88,7 +88,7 @@ function makeWoodTexture(){
  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
 const woodMat = new THREE.MeshStandardMaterial({color:'#b18a61',map:makeWoodTexture(),roughness:.78});
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=-Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
 const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
@@ -148,9 +148,9 @@ function textSprite(text,opts={}){
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
 }
 const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
-tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
+tiText.rotation.x=Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
 const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'900 42px Arial'});
-modelText.rotation.x=-Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
+modelText.rotation.x=Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
 
 // Recessed keypad panel, with evenly spaced rows and generous margins.
 roundedBox(2.76,.065,2.42,.085,darkMat,calculator,0,.405,-.67);
@@ -172,7 +172,7 @@ keys.forEach(([label,action,row,col])=>{
  const faceMat=isEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
  const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 82px Arial':'900 150px Arial',color:'#080604'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
+ face.rotation.x=Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
  cap.userData={label,action,homeY:.455};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
 });
 
@@ -181,7 +181,7 @@ roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);
 const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
 hatch.visible=false;hatch.userData.hatch=true;
 const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial'});
-hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=-Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
+hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
 const batteryGroup=new THREE.Group();calculator.add(batteryGroup);
 for(let i=0;i<2;i++){
  const battery=cylinder(.16,.78,mat(i?'#c8c9bd':'#d5c7a4',.32,.2),batteryGroup,i?.35:-.35,-.16,-1.20,28);
