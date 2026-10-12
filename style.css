@@ -37,3 +37,17 @@
 .key.utility,.key.operator{font-size:15px;}
 .key.operator:last-child{background:linear-gradient(160deg,#ffb35f,#e36c2d);color:#21150c;}
 @media(max-width:650px){.keypad{grid-template-rows:repeat(5,minmax(52px,auto));}.key{font-size:16px;}.key.utility,.key.operator{font-size:14px;}}
+
+/* Compact four-direction viewport orbit control, inspired by 3D modeling apps. */
+.scene-toolbar{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;padding:0 14px 14px;position:relative;z-index:2}
+.scene-toolbar .scene-controls{padding:0;justify-content:flex-start}
+.orbit-pad{display:grid;grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,34px);gap:3px;align-items:stretch;justify-items:stretch}
+.orbit-pad button{display:grid;place-items:center;padding:0;border:1px solid #76583a;border-radius:5px;background:linear-gradient(180deg,#3b2a1d,#21170f);color:#f2d4a5;font:700 19px/1 'DM Sans',sans-serif;box-shadow:0 2px 0 #100b07,inset 0 1px #ffffff12;transition:transform .12s,background .12s,border-color .12s}
+.orbit-pad button:hover{background:linear-gradient(180deg,#59402a,#302014);border-color:#d0a56e}
+.orbit-pad button:active{transform:translateY(2px);box-shadow:0 0 0 #100b07}
+.orbit-up{grid-column:2;grid-row:1}.orbit-left{grid-column:1;grid-row:2}.orbit-home{grid-column:2;grid-row:2}.orbit-right{grid-column:3;grid-row:2}.orbit-down{grid-column:2;grid-row:3}
+.orbit-pad .orbit-home{font-size:26px;color:#d0aa77}
+.key{color:#080604!important;font-weight:900!important;text-shadow:none!important}
+.key.utility,.key.operator{color:#080604!important;font-weight:900!important;text-shadow:none!important}
+.key.operator:last-child{color:#080604!important}
+@media(max-width:650px){.scene-toolbar{gap:15px}.orbit-pad{grid-template-columns:34px 34px 34px;grid-template-rows:repeat(3,31px)}.scene-toolbar .scene-controls{justify-content:center}}
