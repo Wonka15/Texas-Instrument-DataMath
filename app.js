@@ -187,7 +187,8 @@ for(let i=0;i<8;i++){
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
- glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
+ // Face the glyph plane upward toward the camera; the opposite rotation reads mirrored from above.
+  glyph.rotation.x=-Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
 }
