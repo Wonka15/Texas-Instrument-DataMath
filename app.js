@@ -79,6 +79,7 @@ const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#77784f', roughness:.3
 const orangeKeyMat = new THREE.MeshPhysicalMaterial({color:'#d76a2c',roughness:.34,clearcoat:.22,clearcoatRoughness:.34});
 const inkMat = mat('#38281b', .65);
 const ledMat = new THREE.MeshBasicMaterial({ color:'#ff2418',depthTest:false,toneMapped:false });
+const ledBaseColor = new THREE.Color('#ff2418');
 const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e',depthTest:false,toneMapped:false });
 const lensMat = new THREE.MeshBasicMaterial({ color:'#160807', depthWrite:true, depthTest:true });
 const whiteMat = mat('#e5d3b2', .5);
@@ -203,6 +204,7 @@ const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'s
 let ledPulse=0,lastLedFrame=0;
 function applyLedStudio(){
  const b=ledStudio.brightness/100;
+ ledMat.color.copy(ledBaseColor).multiplyScalar(b);
  const styleScale=ledStudio.style==='authentic'?.78:ledStudio.style==='clean'?.62:ledStudio.style==='futuristic'?1.18:1;
  ledGlow.scale.set(2.8*styleScale,.92*styleScale,1);
  ledGlow.material.color.set(ledStudio.style==='futuristic'?0xff4935:0xff2a16);
