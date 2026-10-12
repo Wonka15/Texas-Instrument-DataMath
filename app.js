@@ -6,6 +6,16 @@ import { RoundedBoxGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/e
 const sceneEl = document.querySelector('#scene');
 const loadState = document.querySelector('#loadState');
 const viewLabel = document.querySelector('#viewLabel');
+
+// Surface startup failures in the page instead of leaving an unexplained empty viewport.
+window.addEventListener('error', (event) => {
+  if (loadState) loadState.textContent = '3D ERROR — CHECK CONSOLE';
+  console.error('Datamath 3D startup/runtime error:', event.error || event.message);
+});
+window.addEventListener('unhandledrejection', (event) => {
+  if (loadState) loadState.textContent = '3D MODULE ERROR — CHECK CONNECTION';
+  console.error('Datamath 3D module error:', event.reason);
+});
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(sceneEl.clientWidth, sceneEl.clientHeight);
