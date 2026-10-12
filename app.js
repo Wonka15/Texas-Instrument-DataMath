@@ -19,8 +19,10 @@ sceneEl.appendChild(renderer.domElement);
 
 const world = new THREE.Scene();
 world.background = null;
-const camera = new THREE.PerspectiveCamera(36, sceneEl.clientWidth / sceneEl.clientHeight, .1, 100);
-const initialCamera = new THREE.Vector3(0, 4.8, 9.5);
+// Orthographic projection keeps proportions stable for reference-style inspection views.
+const viewHeight = 7.8;
+const camera = new THREE.OrthographicCamera(-viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight / 2, -viewHeight / 2, .1, 100);
+const initialCamera = new THREE.Vector3(0, 5.4, 9.5);
 camera.position.copy(initialCamera);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
@@ -263,11 +265,30 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(pickables,false)[0];
  if(hit?.object?.userData?.key){const k=hit.object.userData.key;press(k.userData.action,k.userData.label);k.position.y=k.userData.homeY-.045;setTimeout(()=>k.position.y=k.userData.homeY,90);}
 });
-document.querySelector('#homeView').addEventListener('click',()=>{camera.position.copy(initialCamera);controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='FRONT · 3D';});
-document.querySelector('#flipView').addEventListener('click',()=>{calculator.rotation.y+=Math.PI;viewLabel.textContent=calculator.rotation.y%(Math.PI*2)>1?'REAR · 3D':'FRONT · 3D';});
+function setOrthoView(name){
+  calculator.rotation.set(0,0,0);
+  camera.up.set(0,1,0);
+  const positions={
+    'face':new THREE.Vector3(0,10,0),
+    'rear':new THREE.Vector3(0,-10,0),
+    'left':new THREE.Vector3(-10,0,0),
+    'right':new THREE.Vector3(10,0,0),
+    'top':new THREE.Vector3(0,0,10),
+    'bottom':new THREE.Vector3(0,0,-10)
+  };
+  if(name==='face'||name==='rear') camera.up.set(0,0,name==='face'?-1:1);
+  if(name==='top'||name==='bottom') camera.up.set(0,1,0);
+  camera.position.copy(positions[name]);
+  camera.zoom=1;camera.updateProjectionMatrix();
+  controls.target.set(0,0,0);controls.update();
+  viewLabel.textContent=({face:'FACE · ORTHO',rear:'REAR · ORTHO',left:'LEFT · ORTHO',right:'RIGHT · ORTHO',top:'TOP EDGE · ORTHO',bottom:'BOTTOM EDGE · ORTHO'})[name];
+}
+document.querySelector('#homeView').addEventListener('click',()=>{camera.up.set(0,1,0);camera.position.copy(initialCamera);camera.zoom=1;camera.updateProjectionMatrix();controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='3/4 · ORTHO';});
+document.querySelector('#flipView').addEventListener('click',()=>setOrthoView('rear'));
+document.querySelectorAll('[data-ortho-view]').forEach(button=>button.addEventListener('click',()=>setOrthoView(button.dataset.orthoView)));
 const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrButton.style.display='none';document.body.appendChild(vrButton);
 if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
-function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
+function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 new ResizeObserver(resize).observe(sceneEl);
 renderer.setAnimationLoop((time=0)=>{
   controls.update();
