@@ -442,7 +442,7 @@ function animateLedEffects(timeMs){
  });
  ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?.9:.6))*displaySegmentFactor;
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*pulse*displaySegmentFactor*(futuristic?1.35:1);
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.52:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.94:ledStudio.particles==='reactive'?.22+ledPulse*.62:0;
  updateLightingBalance();
 for(let i=0;i<sparkCount;i++){
   const k=i*3;
