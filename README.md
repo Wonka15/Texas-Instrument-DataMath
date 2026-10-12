@@ -1,5 +1,11 @@
 # TI Datamath — Interactive 3D Calculator
 
+## 🌐 Open the website
+
+**[Launch Datamath in your browser](https://wonka15.github.io/Texas-Instrument-DataMath/)** — no installation needed.
+
+Works on desktop and mobile. Camera features require HTTPS and permission; tracked AR requires a compatible Android WebXR browser, while iPhone/iPad use a camera-preview fallback.
+
 A browser-based, Three.js tribute to the 1970s Texas Instruments Datamath calculator. This first working version includes a walnut-toned studio scene, procedural 3D calculator geometry, interactive keys, a red LED-style display, generated key clicks, and a simulated battery bay.
 
 ## Run locally
@@ -14,7 +20,7 @@ Then open http://localhost:8000.
 
 ## Publish with GitHub Pages
 
-Open repository **Settings → Pages → Build and deployment**. Select **Deploy from a branch**, choose `main` and `/(root)`, and save. After deployment, GitHub will display the public site URL.
+The published website is available at **https://wonka15.github.io/Texas-Instrument-DataMath/**. If it does not load yet, open repository **Settings → Pages → Build and deployment** and select **Deploy from a branch**, branch `main`, folder `/(root)`, then save. GitHub Pages can take a few minutes to publish changes.
 
 ## Controls
 
@@ -24,7 +30,9 @@ Open repository **Settings → Pages → Build and deployment**. Select **Deploy
 - **Battery Bay** toggles the simulated battery compartment.
 - Use on-screen keys or keyboard digits, `+`, `-`, `*`, `/`, `Enter`, `=`, `Escape`, `Backspace`, and `.`.
 - Toggle generated sound in the header.
+- AR mode uses surface detection on compatible Android WebXR browsers, with a camera-preview fallback on iPhone/iPad.
 - VR is offered when a compatible immersive WebXR device/browser is detected.
+- Optional KZSC radio play/pause button in the header.
 
 ## Current implementation
 
