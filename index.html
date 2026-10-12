@@ -38,6 +38,16 @@
           </div>
         </div>
         <div class="scene-foot"><span>MODEL: DATAMATH-STYLE / INTERACTIVE STUDY</span><span id="loadState">INITIALIZING 3D…</span></div>
+        <section class="led-studio" aria-labelledby="ledStudioTitle">
+          <div class="led-studio-heading"><div><p class="eyebrow">DISPLAY CONTROLS</p><h3 id="ledStudioTitle">LED Studio</h3></div><span class="led-live"><i></i> LIVE EFFECTS</span></div>
+          <div class="led-studio-grid">
+            <label class="led-control"><span>Glow profile</span><select id="ledStyle"><option value="cinematic">Cinematic bloom</option><option value="authentic">Authentic vintage</option><option value="clean">Clean / crisp</option><option value="futuristic">Retro-futuristic</option></select></label>
+            <label class="led-control"><span>Particle behavior</span><select id="ledParticles"><option value="reactive">Reactive on keypress</option><option value="ambient">Ambient sparks</option><option value="off">Off</option></select></label>
+            <label class="led-control"><span>Phosphor flicker</span><select id="ledFlicker"><option value="subtle">Subtle persistence</option><option value="off">Stable / no flicker</option><option value="vintage">Vintage flicker</option></select></label>
+            <label class="led-control led-brightness"><span>LED brightness <output id="ledBrightnessValue" for="ledBrightness">78%</output></span><input id="ledBrightness" type="range" min="10" max="100" step="1" value="78"></label>
+          </div>
+          <label class="led-reflection-toggle"><input id="ledReflections" type="checkbox" checked><span class="led-checkmark" aria-hidden="true"></span><span><strong>Red light reflections</strong><small>Spill onto the molded body and wooden tabletop</small></span></label>
+        </section>
       </div>
     </section>
     <section class="lower">
