@@ -24,8 +24,11 @@ const viewHeight = 6.4;
 const camera = new THREE.OrthographicCamera(-viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight / 2, -viewHeight / 2, .1, 100);
 // The keypad/branding run along the Z axis: positive Z is the top of the face.
 // View from the opposite Z end so the calculator reads upright (brand, display, keys).
-const initialCamera = new THREE.Vector3(0, 5.4, -9.5);
+const initialCamera = new THREE.Vector3(0, 8.2, -7.4);
 camera.position.copy(initialCamera);
+// The face lies in the X/Z plane, so +Z—not world +Y—is the visual 'up' direction.
+camera.up.set(0, 0, 1);
+camera.lookAt(0, 0, 0);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
 controls.enableDamping = true;
@@ -287,7 +290,7 @@ function setOrthoView(name){
   viewLabel.textContent=({face:'FACE · ORTHO',rear:'REAR · ORTHO',left:'LEFT · ORTHO',right:'RIGHT · ORTHO',top:'TOP EDGE · ORTHO',bottom:'BOTTOM EDGE · ORTHO'})[name];
 }
 function resetView(){
- camera.up.set(0,1,0);camera.position.copy(initialCamera);camera.zoom=1;camera.updateProjectionMatrix();
+ camera.up.set(0,0,1);camera.position.copy(initialCamera);camera.lookAt(0,0,0);camera.zoom=1;camera.updateProjectionMatrix();
  controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='3D ORBIT VIEW';
 }
 document.querySelector('#homeView').addEventListener('click',resetView);
