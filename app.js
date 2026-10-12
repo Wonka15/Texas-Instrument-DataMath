@@ -154,8 +154,21 @@ const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({
  blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false
 }));
 ledGlow.position.set(0,.477,.88);ledGlow.scale.set(2.8,.92,1);ledGlow.renderOrder=18;calculator.add(ledGlow);
-const ledLight=new THREE.PointLight(0xff1b0b,1.7,2.8,2);
+const ledLight=new THREE.PointLight(0xff1b0b,1.7,3.4,2);
 ledLight.position.set(0,.66,.88);calculator.add(ledLight);
+function makeTableReflectionTexture(){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+ const ctx=canvas.getContext('2d');
+ const gradient=ctx.createRadialGradient(128,128,8,128,128,126);
+ gradient.addColorStop(0,'rgba(255,25,8,0.22)');gradient.addColorStop(.28,'rgba(255,20,7,0.12)');
+ gradient.addColorStop(.62,'rgba(255,15,4,0.045)');gradient.addColorStop(1,'rgba(255,0,0,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,256,256);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
+const tableReflection=new THREE.Mesh(new THREE.PlaneGeometry(4.5,4.5),
+ new THREE.MeshBasicMaterial({map:makeTableReflectionTexture(),transparent:true,opacity:.9,
+ blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+tableReflection.rotation.x=-Math.PI/2;tableReflection.position.set(0,-.292,.22);tableReflection.renderOrder=2;world.add(tableReflection);
 
 // Tiny floating phosphor sparks. Positions stay in the display's local coordinate
 // space so the effect follows the calculator naturally when the model is rotated.
@@ -185,22 +198,65 @@ const sparkMaterial=new THREE.PointsMaterial({
 });
 const ledSparks=new THREE.Points(sparkGeometry,sparkMaterial);
 ledSparks.frustumCulled=false;ledSparks.renderOrder=22;calculator.add(ledSparks);
+// LED Studio preset and live controls.
+const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'subtle',reflections:true};
+let ledPulse=0,lastLedFrame=0;
+function applyLedStudio(){
+ const b=ledStudio.brightness/100;
+ const styleScale=ledStudio.style==='authentic'?.78:ledStudio.style==='clean'?.62:ledStudio.style==='futuristic'?1.18:1;
+ ledGlow.scale.set(2.8*styleScale,.92*styleScale,1);
+ ledGlow.material.color.set(ledStudio.style==='futuristic'?0xff4935:0xff2a16);
+ ledLight.intensity=1.75*b*(ledStudio.style==='cinematic'?1.12:1);
+ tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
+ ledSparks.visible=ledStudio.particles!=='off';
+}
+function triggerLedActivity(action){
+ if(ledStudio.particles==='off')return;
+ ledPulse=Math.min(1,ledPulse+(action==='equals'?.95:action==='clear'?.72:.36));
+ if(ledStudio.particles==='reactive'){
+  const count=action==='equals'?24:action==='clear'?16:9;
+  for(let n=0;n<count;n++){
+   const i=(Math.random()*sparkCount)|0,k=i*3;
+   sparkPositions[k]=(Math.random()-.5)*2.18;sparkPositions[k+1]=.50+Math.random()*.025;
+   sparkPositions[k+2]=.62+Math.random()*.50;sparkLife[i]=0;sparkSpeed[i]=.65+Math.random()*.9;
+  }
+ }
+}
 function animateLedEffects(timeMs){
- const t=timeMs*.001;
- ledGlow.material.opacity=.70+Math.sin(t*2.1)*.10+Math.sin(t*5.7)*.035;
- ledLight.intensity=1.45+Math.sin(t*2.1)*.22;
+ const t=timeMs*.001,dt=lastLedFrame?Math.min(.05,Math.max(0,(timeMs-lastLedFrame)*.001)):1/60;
+ lastLedFrame=timeMs;
+ const amount=ledStudio.flicker==='subtle'?.035:ledStudio.flicker==='vintage'?.095:0;
+ const pulse=ledStudio.flicker==='off'?1:1+Math.sin(t*2.1)*amount+Math.sin(t*5.7)*amount*.32;
+ ledPulse=Math.max(0,ledPulse-dt*1.9);
+ const b=ledStudio.brightness/100;
+ const base=ledStudio.style==='cinematic'?.9:ledStudio.style==='authentic'?.66:ledStudio.style==='clean'?.46:.95;
+ ledGlow.material.opacity=Math.min(1,base*b*pulse+ledPulse*.15);
+ ledLight.intensity=1.75*b*pulse+ledPulse*.9;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.74:ledStudio.particles==='reactive'?.24+ledPulse*.68:0;
  for(let i=0;i<sparkCount;i++){
-  const k=i*3;
-  sparkLife[i]+=sparkSpeed[i]/60;
-  sparkPositions[k+2]+=.0025+sparkSpeed[i]*.0015;
+  const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
+  sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
   sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
   const twinkle=.45+.55*Math.abs(Math.sin(t*7.5+i*2.31));
-  sparkColors[k]=twinkle;
-  sparkColors[k+1]=twinkle*(.12+(i%5)*.045);
+  sparkColors[k]=twinkle;sparkColors[k+1]=twinkle*(.12+(i%5)*.045);
   if(sparkLife[i]>1||sparkPositions[k+2]>1.22)respawnSpark(i);
  }
- sparkGeometry.attributes.position.needsUpdate=true;
- sparkGeometry.attributes.color.needsUpdate=true;
+ sparkGeometry.attributes.position.needsUpdate=true;sparkGeometry.attributes.color.needsUpdate=true;
+}
+function wireLedStudio(){
+ const style=document.querySelector('#ledStyle'),brightness=document.querySelector('#ledBrightness');
+ const brightnessValue=document.querySelector('#ledBrightnessValue'),particles=document.querySelector('#ledParticles');
+ const flicker=document.querySelector('#ledFlicker'),reflections=document.querySelector('#ledReflections');
+ if(!style||!brightness||!brightnessValue||!particles||!flicker||!reflections)return;
+ style.value=ledStudio.style;brightness.value=String(ledStudio.brightness);
+ particles.value=ledStudio.particles;flicker.value=ledStudio.flicker;reflections.checked=ledStudio.reflections;
+ brightnessValue.textContent=ledStudio.brightness+'%';
+ style.addEventListener('change',()=>{ledStudio.style=style.value;applyLedStudio();});
+ brightness.addEventListener('input',()=>{ledStudio.brightness=Number(brightness.value);brightnessValue.textContent=ledStudio.brightness+'%';applyLedStudio();});
+ particles.addEventListener('change',()=>{ledStudio.particles=particles.value;applyLedStudio();});
+ flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;applyLedStudio();});
+ reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
+ applyLedStudio();
 }
 function setLed(text){
  const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
@@ -310,6 +366,7 @@ function tidy(n){if(!Number.isFinite(n))return 'Error';if(Math.abs(n)>99999999)r
 function calculate(a,b,op){if(op==='+')return a+b;if(op==='-')return a-b;if(op==='*')return a*b;if(op==='/')return b===0?NaN:a/b;return b;}
 function press(action,label){
  clickSound(action==='equals'?520:action.startsWith('op:')?650:820,.035);
+ triggerLedActivity(action);
  if(action.startsWith('num:')){
   const n=action.slice(4);current=waiting?n:(current==='0'?n:current==='Error'?n:current+n).slice(0,12);waiting=false;
  }else if(action==='decimal'){
@@ -345,6 +402,7 @@ window.addEventListener('keydown',e=>{
  if(action){e.preventDefault();press(action,e.key);}
 });
 show();
+wireLedStudio();
 
 // Raycast 3D keycaps so the physical model is also pressable.
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
