@@ -212,7 +212,7 @@ function setDarkMode(enabled){
  const toggle=document.querySelector('#darkModeToggle');
  if(toggle){toggle.setAttribute('aria-pressed',String(darkMode));toggle.textContent=darkMode?'☾ DARK MODE ON':'☼ DARK MODE OFF';}
  const slider=document.querySelector('#ledBrightness'),value=document.querySelector('#ledBrightnessValue');
- if(slider)slider.value=String(ledStudio.brightness);
+ if(slider){slider.value=String(ledStudio.brightness);slider.disabled=darkMode;slider.setAttribute('aria-disabled',String(darkMode));}
  if(value)value.textContent=ledStudio.brightness+'%';
  document.documentElement.classList.toggle('datamath-dark-mode',darkMode);
  applyLedStudio();
