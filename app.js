@@ -20,7 +20,7 @@ sceneEl.appendChild(renderer.domElement);
 const world = new THREE.Scene();
 world.background = null;
 // Orthographic projection keeps proportions stable for reference-style inspection views.
-const viewHeight = 7.8;
+const viewHeight = 6.4;
 const camera = new THREE.OrthographicCamera(-viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight / 2, -viewHeight / 2, .1, 100);
 const initialCamera = new THREE.Vector3(0, 5.4, 9.5);
 camera.position.copy(initialCamera);
