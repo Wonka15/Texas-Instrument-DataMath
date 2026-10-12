@@ -208,8 +208,8 @@ for(let i=0;i<8;i++){
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
  // Face the viewer (+Y); compensate for the plane's rotated local up and camera-right axes.
- glyph.rotation.x=-Math.PI/2;
- glyph.scale.set(-1,-1,1);
+ glyph.rotation.x=Math.PI/2;
+ glyph.scale.set(-1,1,1); // Local up now maps to world up; flip only X because the camera sees the back face.
  glyph.position.set(0,.205,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
