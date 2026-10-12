@@ -59,18 +59,20 @@ const edgeMat = new THREE.MeshPhysicalMaterial({ color:'#947957', map:plasticGra
 const darkMat = new THREE.MeshPhysicalMaterial({ color:'#382a20', roughness:.38, metalness:0, clearcoat:.15, clearcoatRoughness:.4 });
 const keyMat = new THREE.MeshPhysicalMaterial({ color:'#5a402b', roughness:.32, metalness:0, clearcoat:.28, clearcoatRoughness:.32 });
 const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#6b4e34', roughness:.35, metalness:0, clearcoat:.24, clearcoatRoughness:.35 });
+const orangeKeyMat = new THREE.MeshPhysicalMaterial({color:'#d76a2c',roughness:.34,clearcoat:.22,clearcoatRoughness:.34});
 const inkMat = mat('#38281b', .65);
 const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c' });
 const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e' });
 const lensMat = new THREE.MeshPhysicalMaterial({ color:'#ff9b82', roughness:.16, metalness:0, transparent:true, opacity:.16, transmission:.35, thickness:.04, clearcoat:1, clearcoatRoughness:.08, depthWrite:false });
 const whiteMat = mat('#e5d3b2', .5);
-const woodMat = new THREE.MeshStandardMaterial({color:'#4a2e1b',roughness:.88});
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=-Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
-// Subtle desk grain gives the scene a studio-table feel without distracting from the object.
-for(let i=0;i<34;i++){
-  const grain = new THREE.Mesh(new THREE.BoxGeometry(30,.004,.012), new THREE.MeshStandardMaterial({color:i%2?'#68462a':'#2e1b11',roughness:1,transparent:true,opacity:.18}));
-  grain.position.set(0,-.414,-9+i*.55); world.add(grain);
+function makeWoodTexture(){
+ const c=document.createElement('canvas');c.width=1024;c.height=1024;const g=c.getContext('2d');
+ const base=g.createLinearGradient(0,0,1024,0);base.addColorStop(0,'#28170e');base.addColorStop(.22,'#694125');base.addColorStop(.48,'#3b2415');base.addColorStop(.7,'#765033');base.addColorStop(1,'#321d11');g.fillStyle=base;g.fillRect(0,0,1024,1024);
+ for(let i=0;i<150;i++){const y=Math.random()*1024,a=2+Math.random()*12,p=Math.random()*6.28;g.beginPath();g.moveTo(0,y);for(let x=0;x<=1024;x+=32)g.lineTo(x,y+Math.sin(x*.012+p)*a+Math.sin(x*.047+p)*a*.25);g.strokeStyle=i%3===0?'rgba(20,10,5,.34)':i%3===1?'rgba(210,151,91,.15)':'rgba(8,5,3,.18)';g.lineWidth=1+Math.random()*5;g.stroke();}
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
+const woodMat = new THREE.MeshStandardMaterial({color:'#b18a61',map:makeWoodTexture(),roughness:.78});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=-Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
 const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
@@ -160,12 +162,13 @@ const keys=[
 ];
 const keyMeshes=[];
 keys.forEach(([label,action],i)=>{
- const col=i%4,row=Math.floor(i/4);
- const x=(col-1.5)*.62,z=-.38+(2-row)*.67;
- const cap=new THREE.Group();cap.position.set(x,.415,z);calculator.add(cap);
- roundedBox(.52,.11,.53,.02,darkMat,cap,0,-.01,0);
- const top=roundedBox(.48,.12,.49,.02,(i<4?edgeMat:keyMat),cap,0,.055,0);
- const face=textSprite(label,{w:.43,h:.2,font:label.length>2?'bold 23px Arial':'bold 38px Arial',color:'#ead4af'});
+ const row=Math.floor(i/4),col=i%4,isBottom=row===4,wideZero=isBottom&&label==='0';
+ const x=wideZero?-.62:isBottom?(col===1?0:1.24):(col-1.5)*.62,z=-.38+(2-row)*.67;
+ const cap=new THREE.Group();cap.position.set(x,.415,z);calculator.add(cap);const width=wideZero?1.14:.48;
+ roundedBox(width+.04,.11,.53,.025,darkMat,cap,0,-.01,0);
+ const top=roundedBox(width,.12,.49,.035,label==='='?orangeKeyMat:(i<4?edgeMat:keyMat),cap,0,.055,0);
+ const darkLegend=['=','+','−','×','÷','ON/C','CE','+/-'].includes(label);
+ const face=textSprite(label,{w:wideZero?.96:.42,h:.2,font:label.length>2?'bold 23px Arial':'bold 38px Arial',color:darkLegend?'#17110c':'#ead4af'});
  face.rotation.x=-Math.PI/2;face.position.set(0,.118,0);cap.add(face);
  cap.userData={label,action,homeY:.415};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
