@@ -126,7 +126,8 @@ function makeDigit(x){
  }
  digitGroups.push(group);
 }
-for(let i=0;i<8;i++)makeDigit(-.91+i*.26);
+// Keep the numeral row aligned toward the right, like the live 2D calculator display.
+for(let i=0;i<8;i++)makeDigit(-.85+i*.26);
 function setLed(text){
  const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
