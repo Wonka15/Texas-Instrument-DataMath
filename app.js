@@ -37,14 +37,32 @@ const rimLight = new THREE.DirectionalLight(0xff543c, 1.4); rimLight.position.se
 const fillLight = new THREE.PointLight(0xb4c5ff, .65, 20); fillLight.position.set(4, 3, 4); world.add(fillLight);
 
 const mat = (color, roughness=.65, metalness=0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
-const bodyMat = mat('#c6ad83', .42);
-const edgeMat = mat('#947957', .5);
-const darkMat = mat('#382a20', .42);
-const keyMat = mat('#5a402b', .35);
-const keyTopMat = mat('#6b4e34', .38);
+// Fine procedural molded-plastic grain, generated locally without external texture downloads.
+function makePlasticGrain(){
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,256,256);
+  for(let i=0;i<6200;i++){
+    const v=150+Math.floor(Math.random()*95);
+    ctx.fillStyle='rgba('+v+','+v+','+v+','+(Math.random()*.16)+')';
+    ctx.fillRect(Math.random()*256,Math.random()*256,1+Math.random()*2,1);
+  }
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.repeat.set(2.5,3.5);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  return texture;
+}
+const plasticGrain=makePlasticGrain();
+const bodyMat = new THREE.MeshPhysicalMaterial({ color:'#c6ad83', map:plasticGrain, roughness:.36, metalness:0, bumpMap:plasticGrain, bumpScale:.012, clearcoat:.24, clearcoatRoughness:.42 });
+const edgeMat = new THREE.MeshPhysicalMaterial({ color:'#947957', map:plasticGrain, roughness:.39, metalness:0, bumpMap:plasticGrain, bumpScale:.01, clearcoat:.18, clearcoatRoughness:.46 });
+const darkMat = new THREE.MeshPhysicalMaterial({ color:'#382a20', roughness:.38, metalness:0, clearcoat:.15, clearcoatRoughness:.4 });
+const keyMat = new THREE.MeshPhysicalMaterial({ color:'#5a402b', roughness:.32, metalness:0, clearcoat:.28, clearcoatRoughness:.32 });
+const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#6b4e34', roughness:.35, metalness:0, clearcoat:.24, clearcoatRoughness:.35 });
 const inkMat = mat('#38281b', .65);
 const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c' });
 const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e' });
+const lensMat = new THREE.MeshPhysicalMaterial({ color:'#ff9b82', roughness:.16, metalness:0, transparent:true, opacity:.16, transmission:.35, thickness:.04, clearcoat:1, clearcoatRoughness:.08, depthWrite:false });
 const whiteMat = mat('#e5d3b2', .5);
 const woodMat = new THREE.MeshStandardMaterial({color:'#4a2e1b',roughness:.88});
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=-Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
@@ -68,23 +86,52 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
 // Main molded shell: long axis vertical, keypad and display on the front (+Z).
 roundedBox(3.08,.54,5.28,.14,edgeMat,calculator,0,0,0);
 roundedBox(2.98,.42,5.18,.12,bodyMat,calculator,0,.20,0);
-// Raised rim and dark display window.
-roundedBox(2.48,.075,1.05,.04,edgeMat,calculator,0,.405,1.62);
-roundedBox(2.28,.065,.83,.03,darkMat,calculator,0,.45,1.62);
-roundedBox(2.03,.012,.55,.01,mat('#180f0c',.2),calculator,0,.49,1.62);
+// Deep hooded LED well. The dark floor is recessed under the shell surface.
+roundedBox(2.5,.105,1.12,.07,edgeMat,calculator,0,.405,1.62);
+roundedBox(2.24,.018,.79,.035,mat('#160d0a',.22),calculator,0,.414,1.62);
+// Sculpted side cheeks, thick brow and front lip make a molded hood with a deep shadow line.
+roundedBox(.20,.23,1.12,.075,bodyMat,calculator,-1.12,.49,1.62);
+roundedBox(.20,.23,1.12,.075,bodyMat,calculator,1.12,.49,1.62);
+roundedBox(2.30,.20,.24,.075,bodyMat,calculator,0,.555,2.07);
+roundedBox(2.30,.16,.19,.06,edgeMat,calculator,0,.525,1.14);
+// Clear, low-opacity lens over the recessed segments catches a subtle highlight.
+roundedBox(2.03,.018,.57,.025,lensMat,calculator,0,.433,1.62);
 // LED segments: actual lit segment geometry, driven from calculator value.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],'.':['dot']};
 const digitGroups=[];
 function makeDigit(x){
- const group=new THREE.Group(); group.position.set(x,.505,1.62); calculator.add(group);
+ const group=new THREE.Group(); group.position.set(x,.424,1.62); calculator.add(group);
  const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
  for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
-   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.012,sh),new THREE.MeshBasicMaterial({color:0x32100e}));
+   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),new THREE.MeshBasicMaterial({color:0x32100e}));
    s.position.set(sx,0,sy); group.add(s); group.userData[name]=s;
  }
  digitGroups.push(group); return group;
 }
 for(let i=0;i<8;i++)makeDigit(-.86+i*.245);
+// A small red scatter suggests light refracting through the lens, with no expensive post-processing.
+const ledDustCount=22;
+const ledDustGeometry=new THREE.BufferGeometry();
+const ledDustPositions=new Float32Array(ledDustCount*3);
+const ledDustPhases=new Float32Array(ledDustCount);
+for(let i=0;i<ledDustCount;i++){
+  ledDustPositions[i*3]=(Math.random()-.5)*1.95;
+  ledDustPositions[i*3+1]=.447+Math.random()*.09;
+  ledDustPositions[i*3+2]=1.62+(Math.random()-.5)*.53;
+  ledDustPhases[i]=Math.random()*Math.PI*2;
+}
+ledDustGeometry.setAttribute('position',new THREE.BufferAttribute(ledDustPositions,3));
+const ledDust=new THREE.Points(ledDustGeometry,new THREE.PointsMaterial({color:0xff5946,size:.018,transparent:true,opacity:.38,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));
+calculator.add(ledDust);
+// A tiny generated sprite gives the LED area a soft halo without a costly bloom pass.
+const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
+const glowCtx=glowCanvas.getContext('2d');
+const glowGradient=glowCtx.createRadialGradient(32,32,1,32,32,31);
+glowGradient.addColorStop(0,'rgba(255,48,30,.38)');glowGradient.addColorStop(.35,'rgba(255,40,25,.12)');glowGradient.addColorStop(1,'rgba(255,30,20,0)');
+glowCtx.fillStyle=glowGradient;glowCtx.fillRect(0,0,64,64);
+const glowTexture=new THREE.CanvasTexture(glowCanvas);
+const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xff4b32,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false}));
+ledGlow.position.set(0,.449,1.62);ledGlow.scale.set(2.1,.63,1);calculator.add(ledGlow);
 function setLed(text){
  const str=String(text).slice(0,8); const chars=str.padStart(Math.min(8,str.length),' ');
  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
@@ -219,5 +266,13 @@ const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrBut
 if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
 function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 new ResizeObserver(resize).observe(sceneEl);
-renderer.setAnimationLoop(()=>{controls.update();renderer.render(world,camera);});
+renderer.setAnimationLoop((time=0)=>{
+  controls.update();
+  // Animate just 22 particles and one sprite to keep the effect light on integrated graphics.
+  const positions=ledDustGeometry.attributes.position.array;
+  for(let i=0;i<ledDustCount;i++)positions[i*3+1]=.447+Math.sin(time*.0011+ledDustPhases[i])*.018;
+  ledDustGeometry.attributes.position.needsUpdate=true;
+  ledGlow.material.opacity=.26+Math.sin(time*.002)*.045;
+  renderer.render(world,camera);
+});
 loadState.textContent='MODEL READY';
