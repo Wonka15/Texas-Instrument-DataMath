@@ -193,7 +193,7 @@ const tableReflection=new THREE.Mesh(new THREE.PlaneGeometry(4.5,4.5),
 tableReflection.rotation.x=-Math.PI/2;tableReflection.position.set(0,-.292,.22);tableReflection.renderOrder=2;world.add(tableReflection);
 // Tiny floating phosphor sparks. Positions stay in the display's local coordinate
 // space so the effect follows the calculator naturally when the model is rotated.
-const sparkCount=54;
+const sparkCount=92;
 const sparkPositions=new Float32Array(sparkCount*3);
 const sparkColors=new Float32Array(sparkCount*3);
 const sparkLife=new Float32Array(sparkCount);
@@ -251,25 +251,25 @@ function flash3DKey(action){
 function applyLedStudio(){
  const b=effectiveLedBrightness();
  const futuristic=ledStudio.style==='futuristic';
- const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:1.08;
+ const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:ledStudio.style==='cinematic'?1.32:1.08;
  // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b);
  ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
  ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
- ledGlow.material.opacity=futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:.88;
+ ledGlow.material.opacity=futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.96:.88;
  ledLight.color.set(futuristic?0xff5637:0xff1b0b);
- ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.12:futuristic?1.75:1)*displaySegmentFactor;
+ ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.3:futuristic?1.75:1)*displaySegmentFactor;
  // Layered bloom spreads the phosphor haze across the entire display window.
  displayBloomLayers.forEach((layer,i)=>{
   layer.material.color.set(futuristic?0xff5037:0xff2015);
-  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:.25)*b*(i===2?.9:1);
+  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25)*b*(i===2?.9:1);
   layer.scale.set((1.25+i*.18)*styleScale,(.48+i*.08)*styleScale,1);
  });
  tableReflection.material.opacity=(darkMode?1.2:.9)*b*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
  ledSparks.visible=ledStudio.particles!=='off';
- sparkMaterial.size=ledStudio.particles==='ambient'?.052:futuristic?.06:.032;
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.95:ledStudio.particles==='reactive'?.75:0;
+ sparkMaterial.size=ledStudio.particles==='ambient'?.066:futuristic?.06:.032;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.76:ledStudio.particles==='reactive'?.75:0;
 }
 function triggerLedActivity(action){
  if(ledStudio.particles==='off')return;
@@ -295,16 +295,16 @@ function animateLedEffects(timeMs){
  ledPulse=Math.max(0,ledPulse-dt*1.9);
  const b=effectiveLedBrightness();
  const futuristic=ledStudio.style==='futuristic';
- const base=ledStudio.style==='cinematic'?.9:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
+ const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b*pulse);
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*b*pulse+ledPulse*.15);
  displayBloomLayers.forEach((layer,i)=>{
-  const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:.25;
+  const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25;
   layer.material.opacity=profile*b*pulse*(i===2?.9:1)+ledPulse*.035;
  });
  ledLight.intensity=((darkMode?3.2:1.75)*b*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?1.4:.9))*displaySegmentFactor;
  tableReflection.material.opacity=(darkMode?1.2:.9)*b*pulse*displaySegmentFactor*(futuristic?1.35:1);
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.95:ledStudio.particles==='reactive'?.2+ledPulse*.75:0;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.76:ledStudio.particles==='reactive'?.2+ledPulse*.75:0;
 for(let i=0;i<sparkCount;i++){
   const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
   sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
