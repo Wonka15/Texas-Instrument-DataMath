@@ -115,3 +115,45 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 }
 @media(max-width:390px){.status{display:none}.wordmark{font-size:11px}.mark{width:32px;height:32px}.small-button{padding:7px;font-size:7px}}
 @media(prefers-reduced-motion:reduce){.music-button,#arButton{transition:none}}
+
+
+/* VR entry lives beneath the physical calculator, separate from the 3D viewport controls. */
+.vr-entry-button{display:flex;align-items:center;justify-content:center;gap:10px;width:min(100%,430px);min-height:46px;margin:16px auto 0;padding:12px 16px;border:1px solid #705338;border-radius:7px;background:linear-gradient(180deg,#38291d,#21180f);color:#e0c49b;font:10px var(--mono);letter-spacing:.12em;box-shadow:0 3px 0 #100c08,inset 0 1px #ffffff0d;transition:transform .15s,border-color .18s,box-shadow .18s,color .18s}
+.vr-entry-button:hover:not(:disabled){border-color:#c29b67;color:#fff0dc;transform:translateY(-1px)}
+.vr-entry-button:disabled{opacity:.62;cursor:not-allowed}
+.vr-entry-button:active:not(:disabled){transform:translateY(1px)}
+/* Dark mode keeps a quiet halo on controls; a press briefly adds a soft orange cue. */
+.datamath-dark-mode button:not(:disabled){transition:box-shadow .16s,border-color .16s,background-color .16s,transform .12s}
+.datamath-dark-mode .key,
+.datamath-dark-mode .scene-controls button,
+.datamath-dark-mode .orbit-pad button,
+.datamath-dark-mode .small-button,
+.datamath-dark-mode .dark-mode-toggle,
+.datamath-dark-mode .vr-entry-button{
+ box-shadow:0 0 9px #ff57300d,0 0 2px #ff6a4014,inset 0 0 0 1px #ff9a5810;
+}
+.datamath-dark-mode button:not(:disabled):active,
+.datamath-dark-mode button:not(:disabled).pressed{
+ border-color:#f0a06a;
+ box-shadow:0 0 0 1px #ff9a5830,0 0 12px #ff762c3b,inset 0 0 10px #ff762c24!important;
+}
+.datamath-dark-mode .key:active,.datamath-dark-mode .key.pressed{
+ filter:brightness(1.04);
+}
+.datamath-vintage-flicker .led{
+ animation:datamathVintageFlicker 2.8s steps(1,end) infinite;
+}
+.datamath-vintage-flicker .display-glow{
+ animation:datamathGlowFlicker 2.1s ease-in-out infinite;
+}
+@keyframes datamathVintageFlicker{
+ 0%,5%,7%,19%,20%,43%,44%,68%,70%,100%{opacity:1}
+ 6%{opacity:.76} 21%{opacity:.88} 45%{opacity:.7} 69%{opacity:.83}
+}
+@keyframes datamathGlowFlicker{
+ 0%,100%{opacity:.85} 30%{opacity:.62} 31%{opacity:.78} 66%{opacity:.55} 68%{opacity:.9}
+}
+@media(prefers-reduced-motion:reduce){
+ .datamath-vintage-flicker .led,.datamath-vintage-flicker .display-glow{animation:none}
+}
+@media(max-width:650px){.vr-entry-button{min-height:48px;margin-top:14px}}
