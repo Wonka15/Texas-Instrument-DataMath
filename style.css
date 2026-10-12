@@ -51,3 +51,29 @@
 .key.utility,.key.operator{color:#080604!important;font-weight:900!important;text-shadow:none!important}
 .key.operator:last-child{color:#080604!important}
 @media(max-width:650px){.scene-toolbar{gap:15px}.orbit-pad{grid-template-columns:34px 34px 34px;grid-template-rows:repeat(3,31px)}.scene-toolbar .scene-controls{justify-content:center}}
+
+
+/* LED Studio: compact, keyboard-accessible controls for the real-time display effects. */
+.led-studio{padding:20px 19px 18px;border-top:1px solid #4b3828;background:linear-gradient(145deg,#1c1510dd,#100d0b);color:#ead7ba}
+.led-studio-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}
+.led-studio-heading .eyebrow{margin:0 0 5px;font-size:8px}
+.led-studio-heading h3{font-size:21px;font-weight:500;letter-spacing:-.035em;margin:0}
+.led-live{display:flex;align-items:center;gap:7px;color:#d5a89a;font:8px var(--mono);letter-spacing:.1em;white-space:nowrap}
+.led-live i{width:6px;height:6px;border-radius:50%;background:#ff392b;box-shadow:0 0 10px #ff302b;display:inline-block}
+.led-studio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.led-control{display:flex;flex-direction:column;gap:8px;min-width:0;color:#aa9982;font:9px var(--mono);letter-spacing:.04em}
+.led-control select{width:100%;min-width:0;padding:10px 25px 10px 10px;border:1px solid #58412c;border-radius:4px;background:#21170f;color:#ead7ba;font:10px 'DM Sans',sans-serif;letter-spacing:0;outline-offset:2px}
+.led-control select:focus-visible,.led-control input:focus-visible,.led-reflection-toggle input:focus-visible+.led-checkmark{outline:2px solid #d7a46e;outline-offset:3px}
+.led-brightness{grid-column:1/-1;margin-top:2px}
+.led-brightness>span{display:flex;justify-content:space-between;align-items:center}
+.led-brightness output{color:#ff6b56;font:11px var(--mono)}
+.led-brightness input{width:100%;accent-color:#ff3a2b;cursor:pointer;margin:3px 0 0}
+.led-reflection-toggle{display:flex;align-items:center;gap:11px;margin-top:15px;padding-top:14px;border-top:1px solid #34261b;cursor:pointer}
+.led-reflection-toggle input{position:absolute;width:1px;height:1px;opacity:0}
+.led-checkmark{width:17px;height:17px;flex:0 0 17px;border:1px solid #705338;border-radius:4px;background:#21170f;display:grid;place-items:center}
+.led-reflection-toggle input:checked+.led-checkmark{background:#7f251b;border-color:#f05b43}
+.led-reflection-toggle input:checked+.led-checkmark:after{content:'✓';font:12px 'DM Sans',sans-serif;color:#fff0d8}
+.led-reflection-toggle>span:last-child{display:flex;flex-direction:column;gap:4px}
+.led-reflection-toggle strong{font-size:10px;font-weight:600;color:#e7d1b1}
+.led-reflection-toggle small{font-size:9px;color:#9c8971;line-height:1.5}
+@media(max-width:650px){.led-studio{padding:17px 13px}.led-studio-grid{grid-template-columns:1fr 1fr;gap:12px}.led-control select{font-size:11px}.led-brightness{grid-column:1/-1}.led-studio-heading h3{font-size:19px}}
