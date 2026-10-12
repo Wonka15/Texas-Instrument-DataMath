@@ -150,26 +150,23 @@ for(let i=0;i<8;i++)makeDigit(.97-i*.26);
 let nixieMode=false;
 const nixieTubes=[];
 const nixieDigitMaterials=[];
-function makeNixieGlyphTexture(){
- const canvas=document.createElement('canvas');canvas.width=192;canvas.height=240;
+const nixieGlyphCanvases=[];
+const nixieGlyphTextures=[];
+function drawNixieGlyph(canvas,activeDigit){
  const ctx=canvas.getContext('2d');
  ctx.clearRect(0,0,canvas.width,canvas.height);
  ctx.textAlign='center';ctx.textBaseline='middle';
- // Real Nixie tubes layer several shaped cathodes in one envelope; slight offsets
- // and varied brightness suggest that depth without obscuring the active numeral.
+ // Every cathode is faintly visible through the glass; the selected numeral glows brighter.
  for(let digit=0;digit<=9;digit++){
   ctx.save();
   ctx.font='500 150px Georgia, serif';
-  ctx.shadowColor='#ff6b27';ctx.shadowBlur=digit===8?5:10;
-  ctx.fillStyle=digit===8?'rgba(255,143,72,.22)':'rgba(255,112,43,.34)';
+  ctx.shadowColor='#ff6b27';
+  ctx.shadowBlur=String(digit)===String(activeDigit)?18:4;
+  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,190,115,.98)':'rgba(255,112,43,.22)';
   ctx.fillText(String(digit),96+(digit%3-1)*1.8,120+(digit%4-1.5)*1.1);
   ctx.restore();
  }
- const texture=new THREE.CanvasTexture(canvas);
- texture.colorSpace=THREE.SRGBColorSpace;
- return texture;
 }
-const nixieGlyphTexture=makeNixieGlyphTexture();
 for(let i=0;i<8;i++){
  const tube=new THREE.Group();
  tube.position.set(.97-i*.26,.0,.88);
@@ -182,7 +179,11 @@ for(let i=0;i<8;i++){
  const topRing=new THREE.Mesh(new THREE.TorusGeometry(.104,.009,8,32),new THREE.MeshStandardMaterial({color:'#b77a4b',metalness:.48,roughness:.28}));
  topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
  const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
- const glyphMaterial=new THREE.MeshBasicMaterial({map:nixieGlyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ const glyphCanvas=document.createElement('canvas');glyphCanvas.width=192;glyphCanvas.height=240;
+ drawNixieGlyph(glyphCanvas,'0');
+ const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
+ const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.175,.225),glyphMaterial);
  glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
@@ -195,7 +196,9 @@ function setNixieDigits(chars,dotSlot){
   const glyph=tube.children.find(child=>child.isMesh&&child.geometry.type==='PlaneGeometry');
   if(!glyph)return;
   const material=glyph.material;
-  material.color.set(active===' '? '#ff9b54' : '#ff9b54');
+  drawNixieGlyph(nixieGlyphCanvases[i],active);
+  nixieGlyphTextures[i].needsUpdate=true;
+  material.color.set('#ff9b54');
   material.opacity=active===' '?0:.95;
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
