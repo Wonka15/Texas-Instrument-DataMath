@@ -42,8 +42,9 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
 controls.enableDamping = true;
 controls.dampingFactor = .06;
-controls.minDistance = 5;
-controls.maxDistance = 16;
+// OrthographicCamera zoom is controlled by minZoom/maxZoom, not camera distance.
+controls.minZoom = 0.7;
+controls.maxZoom = 2.4;
 controls.maxPolarAngle = Math.PI; // Permit an exact rear/bottom orthographic inspection view.
 
 world.add(new THREE.HemisphereLight(0xffe4c0, 0x21170f, 2.0));
@@ -153,7 +154,11 @@ function textSprite(text,opts={}){
  ctx.textAlign='center';ctx.textBaseline='middle';
  // These labels sit on planes whose normals point away from the default camera.
  // Only flip horizontally to compensate for the back-side view; keep glyphs upright.
- ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(text,256,64);ctx.restore();
+ if(opts.flipX===false){
+   ctx.fillText(text,256,64);
+ }else{
+   ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(text,256,64);ctx.restore();
+ }
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
@@ -191,7 +196,7 @@ keys.forEach(([label,action,row,col])=>{
 roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);
 const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
 hatch.visible=false;hatch.userData.hatch=true;
-const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial'});
+const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial',flipX:false});
 hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
 const batteryGroup=new THREE.Group();calculator.add(batteryGroup);
 for(let i=0;i<2;i++){
