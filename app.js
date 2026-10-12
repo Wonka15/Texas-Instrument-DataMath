@@ -749,31 +749,41 @@ document.querySelectorAll('[data-orbit]').forEach(button=>button.addEventListene
  if(button.dataset.orbit==='down')controls.rotateUp(-step);
  controls.update();viewLabel.textContent='3D ORBIT VIEW';
 }));
-// Keep the custom VR entry button connected directly to WebXR. A synthetic click
-// on Three.js's hidden VRButton can lose browser user activation and block the session.
+// Keep the custom VR button visible even on devices that cannot launch WebXR.
+// A disabled button looked like the VR feature had been removed; instead, explain
+// the device requirement when tapped and request the session directly from the click.
 const vrButton=document.querySelector('#vrButton');
 async function refreshVrAvailability(){
  if(!vrButton)return;
+ vrButton.disabled=false;
  if(!window.isSecureContext||!navigator.xr){
-  vrButton.disabled=true;
-  vrButton.innerHTML='◇ <span>VR NEEDS COMPATIBLE HTTPS BROWSER</span>';
+  vrButton.innerHTML='◇ <span>ENTER VR · HEADSET REQUIRED</span>';
+  vrButton.title='VR needs a compatible headset and a browser with WebXR support over HTTPS.';
   return;
  }
  try{
   const supported=await navigator.xr.isSessionSupported('immersive-vr');
-  vrButton.disabled=!supported;
-  vrButton.innerHTML=supported?'◇ <span>ENTER VR</span>':'◇ <span>VR UNAVAILABLE ON THIS DEVICE</span>';
+  vrButton.innerHTML=supported?'◇ <span>ENTER VR</span>':'◇ <span>ENTER VR · CHECK DEVICE</span>';
+  vrButton.title=supported?'Start an immersive VR session':'Tap for VR compatibility requirements';
  }catch(error){
   console.warn('WebXR VR availability check failed:',error);
-  vrButton.disabled=true;
-  vrButton.innerHTML='◇ <span>VR CHECK FAILED</span>';
+  vrButton.innerHTML='◇ <span>ENTER VR · CHECK DEVICE</span>';
  }
 }
 refreshVrAvailability();
 vrButton.addEventListener('click',async()=>{
- if(!navigator.xr||!renderer.xr.enabled)return;
+ if(!window.isSecureContext||!navigator.xr||!renderer.xr.enabled){
+  alert('VR mode is still included. To use it, open this site over HTTPS in a WebXR-compatible browser with a supported VR headset connected. Regular phone browsers can explore the 3D model, but cannot start immersive VR by themselves.');
+  return;
+ }
  vrButton.disabled=true;
  try{
+  const supported=await navigator.xr.isSessionSupported('immersive-vr');
+  if(!supported){
+   alert('This browser/device does not currently report immersive VR support. Try a compatible VR headset browser, then reload this page.');
+   vrButton.disabled=false;
+   return;
+  }
   const session=await navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']});
   await renderer.xr.setSession(session);
   vrButton.innerHTML='◇ <span>EXIT VR</span>';
@@ -783,8 +793,8 @@ vrButton.addEventListener('click',async()=>{
   },{once:true});
  }catch(error){
   console.error('Could not start immersive VR session:',error);
+  vrButton.disabled=false;
   vrButton.innerHTML='◇ <span>VR COULD NOT START — RETRY</span>';
-  setTimeout(()=>refreshVrAvailability(),800);
  }
 });
 
