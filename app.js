@@ -315,7 +315,15 @@ function setDarkMode(enabled){
    }
    top.material=darkMode?top.userData.darkMaterial:top.userData.baseMaterial;
   }
-  if(face?.material?.color)face.material.color.set(darkMode?(action==='equals'?'#ffe0b5':action==='clear'||action==='ce'?'#ffd2aa':action.startsWith('op:')?'#f5c8a1':'#f4e1ca'):'#ffffff');
+  if(face?.userData?.labelCanvas&&face.material?.map){
+   const canvas=face.userData.labelCanvas,ctx=canvas.getContext('2d'),opts=face.userData.labelOptions||{};
+   ctx.clearRect(0,0,canvas.width,canvas.height);
+   ctx.fillStyle=darkMode?(action==='equals'?'#ffe0b5':action==='clear'||action==='ce'?'#ffd2aa':action.startsWith('op:')?'#f5c8a1':'#f4e1ca'):(opts.color||'#080604');
+   ctx.font=opts.font||'bold 34px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+   if(opts.flipX===false)ctx.fillText(face.userData.labelText,256,64);
+   else{ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(face.userData.labelText,256,64);ctx.restore();}
+   face.material.map.needsUpdate=true;
+  }
  });
  applyLedStudio();
 }
@@ -479,7 +487,9 @@ function textSprite(text,opts={}){
  }
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
- return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
+ mesh.userData.labelCanvas=canvas;mesh.userData.labelText=text;mesh.userData.labelOptions=opts;
+ return mesh;
 }
 const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
 tiText.rotation.x=Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
