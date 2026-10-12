@@ -300,6 +300,23 @@ function setDarkMode(enabled){
  if(slider){slider.value=String(ledStudio.brightness);slider.disabled=false;slider.setAttribute('aria-disabled','false');}
  if(value)value.textContent=ledStudio.brightness+'%';
  document.documentElement.classList.toggle('datamath-dark-mode',darkMode);
+ // Give every physical key a low-intensity amber edge in dark mode, with warmer
+ // emphasis for operators and equals. The display remains the brightest element.
+ keyMeshes.forEach(cap=>{
+  const top=cap.userData.top,face=cap.userData.face,action=cap.userData.action;
+  if(top){
+   if(!top.userData.baseMaterial)top.userData.baseMaterial=top.material;
+   if(!top.userData.darkMaterial){
+    top.userData.darkMaterial=top.userData.baseMaterial.clone();
+    if(top.userData.darkMaterial.emissive){
+     top.userData.darkMaterial.emissive.set(action==='equals'?0xff8a3d:action==='clear'||action==='ce'?0xff6734:action.startsWith('op:')?0xff8b43:0xff7740);
+     top.userData.darkMaterial.emissiveIntensity=action==='equals'?.22:action==='clear'||action==='ce'?.16:action.startsWith('op:')?.13:.075;
+    }
+   }
+   top.material=darkMode?top.userData.darkMaterial:top.userData.baseMaterial;
+  }
+  if(face?.material?.color)face.material.color.set(darkMode?(action==='equals'?'#ffe0b5':action==='clear'||action==='ce'?'#ffd2aa':action.startsWith('op:')?'#f5c8a1':'#f4e1ca'):'#ffffff');
+ });
  applyLedStudio();
 }
 function flash3DKey(action){
@@ -490,7 +507,7 @@ keys.forEach(([label,action,row,col])=>{
  const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
  const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 82px Arial':'900 150px Arial',color:'#080604'});
  face.rotation.x=Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
- cap.userData={label,action,homeY:.455,top};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
+ cap.userData={label,action,homeY:.455,top,face};top.userData.key=cap;top.userData.baseMaterial=top.material;pickables.push(top);keyMeshes.push(cap);
 });
 
 // Battery cover and rear details are kept below the face and do not intrude into the keypad.
