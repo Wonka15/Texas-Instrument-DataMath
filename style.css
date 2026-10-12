@@ -158,21 +158,45 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 }
 @media(max-width:650px){.vr-entry-button{min-height:48px;margin-top:14px}}
 
-/* Dark mode: quiet always-on amber halos, with a clear soft-orange press cue. */
+/* Dark mode controls: permanently readable, softly illuminated, and subordinate to the LED display. */
 .datamath-dark-mode button:not(:disabled){
- box-shadow:0 0 10px #ff7b351c,0 0 2px #ff9b5b25,inset 0 0 0 1px #ffad7210;
+ color:#e8c5a5;
+ border-color:#6b4936;
+ box-shadow:0 0 7px #ff8a3815,0 0 2px #ffb36b20,inset 0 0 0 1px #ffad7210;
+ text-shadow:0 0 5px #ff9a5812;
+ transition:box-shadow .16s,border-color .16s,background-color .16s,transform .12s,color .16s;
+}
+.datamath-dark-mode .led-control,
+.datamath-dark-mode .led-control>span,
+.datamath-dark-mode .led-control strong,
+.datamath-dark-mode .led-control small,
+.datamath-dark-mode .led-reflection-toggle,
+.datamath-dark-mode .led-reflection-toggle strong,
+.datamath-dark-mode .led-reflection-toggle small,
+.datamath-dark-mode .scene-label,
+.datamath-dark-mode .eyebrow,
+.datamath-dark-mode .led-studio-heading h3{
+ color:#d7b99c;
+ text-shadow:0 0 6px #ff8a3810;
+}
+.datamath-dark-mode .led-control>span:first-child,
+.datamath-dark-mode .led-control strong{
+ color:#edcfb1;
 }
 .datamath-dark-mode button:not(:disabled):hover{
- border-color:#d98b57;
- box-shadow:0 0 12px #ff80302b,0 0 4px #ffb06a2b,inset 0 0 9px #ff8a3510;
+ border-color:#a97851;
+ color:#ffe2c3;
+ box-shadow:0 0 9px #ff8a3822,0 0 3px #ffb36b2b,inset 0 0 7px #ff8a350b;
 }
 .datamath-dark-mode button:not(:disabled):active,
 .datamath-dark-mode button:not(:disabled).pressed{
- border-color:#ffad72!important;
- box-shadow:0 0 0 1px #ff9a5838,0 0 15px #ff762c4d,inset 0 0 12px #ff762c30!important;
- filter:brightness(1.06);
+ border-color:#e7a36e!important;
+ color:#fff0dd!important;
+ box-shadow:0 0 0 1px #ff9a5828,0 0 12px #ff762c35,inset 0 0 9px #ff762c1c!important;
+ text-shadow:0 0 7px #ff9a5830;
+ filter:brightness(1.04);
 }
 .datamath-dark-mode .key:active,
 .datamath-dark-mode .key.pressed{
- box-shadow:0 0 0 1px #ff9a5840,0 0 18px #ff762c55,inset 0 0 12px #ff762c30!important;
+ box-shadow:0 0 0 1px #ff9a5830,0 0 13px #ff762c40,inset 0 0 10px #ff762c22!important;
 }
