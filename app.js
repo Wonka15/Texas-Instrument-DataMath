@@ -159,11 +159,11 @@ function drawNixieGlyph(canvas,activeDigit){
  // Every cathode is faintly visible through the glass; the selected numeral glows brighter.
  for(let digit=0;digit<=9;digit++){
   ctx.save();
-  ctx.font='500 150px Georgia, serif';
-  ctx.shadowColor='#ff6b27';
-  ctx.shadowBlur=String(digit)===String(activeDigit)?18:4;
-  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,190,115,.98)':'rgba(255,112,43,.22)';
-  ctx.fillText(String(digit),96+(digit%3-1)*1.8,120+(digit%4-1.5)*1.1);
+  ctx.font='bold 190px Georgia, serif';
+  ctx.shadowColor=String(digit)===String(activeDigit)?'#fff0bd':'#ff6b27';
+  ctx.shadowBlur=String(digit)===String(activeDigit)?26:3;
+  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,248,218,1)':'rgba(255,124,54,.12)';
+  ctx.fillText(String(digit),96+(digit%3-1)*1.4,120+(digit%4-1.5)*.8);
   ctx.restore();
  }
 }
@@ -184,7 +184,7 @@ for(let i=0;i<8;i++){
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
  const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
- const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.175,.225),glyphMaterial);
+ const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
  glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
@@ -199,7 +199,7 @@ function setNixieDigits(chars,dotSlot){
   drawNixieGlyph(nixieGlyphCanvases[i],active);
   nixieGlyphTextures[i].needsUpdate=true;
   material.color.set('#ff9b54');
-  material.opacity=active===' '?0:.95;
+  material.opacity=active===' '?0:1;
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
   if(!dot){
@@ -291,6 +291,20 @@ let displaySegmentFactor=1,darkMode=false,ledPulse=0,lastLedFrame=0;
 const environmentLights=[{light:ambientLight,normal:2.0,dark:.12},{light:keyLight,normal:3.0,dark:.16},{light:rimLight,normal:1.4,dark:.08},{light:fillLight,normal:.65,dark:.035}];
 // LED brightness always controls the actual display, including in dark mode.
 function effectiveLedBrightness(){return ledStudio.brightness/100;}
+// LED output has a nonlinear boost at the top of the slider so 100% is unmistakably
+// the brightest element in the scene. Controls are simultaneously toned down as it rises.
+function effectiveDisplayDrive(){const b=effectiveLedBrightness();return b*(.78+1.42*b);}
+function updateLightingBalance(){
+ const b=effectiveLedBrightness();
+ document.documentElement.style.setProperty('--led-brightness',String(b));
+ keyMeshes.forEach(cap=>{
+  const top=cap.userData.top,action=cap.userData.action;
+  if(top?.userData.darkMaterial?.emissive){
+   const base=action==='equals'?.075:action==='clear'||action==='ce'?.05:action.startsWith('op:')?.045:.022;
+   top.userData.darkMaterial.emissiveIntensity=base*(1-.88*b);
+  }
+ });
+}
 function setDarkMode(enabled){
  darkMode=Boolean(enabled);
  environmentLights.forEach(({light,normal,dark})=>{light.intensity=darkMode?dark:normal;});
@@ -300,6 +314,7 @@ function setDarkMode(enabled){
  if(slider){slider.value=String(ledStudio.brightness);slider.disabled=false;slider.setAttribute('aria-disabled','false');}
  if(value)value.textContent=ledStudio.brightness+'%';
  document.documentElement.classList.toggle('datamath-dark-mode',darkMode);
+ updateLightingBalance();
  // Give every physical key a low-intensity amber edge in dark mode, with warmer
  // emphasis for operators and equals. The display remains the brightest element.
  keyMeshes.forEach(cap=>{
@@ -310,7 +325,7 @@ function setDarkMode(enabled){
     top.userData.darkMaterial=top.userData.baseMaterial.clone();
     if(top.userData.darkMaterial.emissive){
      top.userData.darkMaterial.emissive.set(action==='equals'?0xff8a3d:action==='clear'||action==='ce'?0xff6734:action.startsWith('op:')?0xff8b43:0xff7740);
-     top.userData.darkMaterial.emissiveIntensity=action==='equals'?.22:action==='clear'||action==='ce'?.16:action.startsWith('op:')?.13:.075;
+     top.userData.darkMaterial.emissiveIntensity=action==='equals'?.075:action==='clear'||action==='ce'?.05:action.startsWith('op:')?.045:.022;
     }
    }
    top.material=darkMode?top.userData.darkMaterial:top.userData.baseMaterial;
@@ -344,23 +359,23 @@ function applyLedStudio(){
  const futuristic=ledStudio.style==='futuristic';
  const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:ledStudio.style==='cinematic'?1.32:1.08;
  // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
- ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b);
+ ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive());
  ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
  ledGlow.visible=!nixieMode;
  displayBloomLayers.forEach(layer=>{layer.visible=!nixieMode;});
  nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
  ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
- ledGlow.material.opacity=futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.96:.88;
+ ledGlow.material.opacity=(futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.96:.88)*effectiveDisplayDrive();
  ledLight.color.set(futuristic?0xff5637:0xff1b0b);
- ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.3:futuristic?1.75:1)*displaySegmentFactor;
+ ledLight.intensity=(darkMode?3.2:1.75)*effectiveDisplayDrive()*(ledStudio.style==='cinematic'?1.3:futuristic?1.75:1)*displaySegmentFactor;
  // Layered bloom spreads the phosphor haze across the entire display window.
  displayBloomLayers.forEach((layer,i)=>{
   layer.material.color.set(futuristic?0xff5037:0xff2015);
-  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25)*b*(i===2?.9:1);
+  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25)*effectiveDisplayDrive()*(i===2?.9:1);
   layer.scale.set((1.25+i*.18)*styleScale,(.48+i*.08)*styleScale,1);
  });
- tableReflection.material.opacity=(darkMode?1.2:.9)*b*displaySegmentFactor*(futuristic?1.35:1);
+ tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
  ledSparks.visible=ledStudio.particles!=='off';
  sparkMaterial.size=ledStudio.particles==='ambient'?.066:futuristic?.06:.032;
@@ -391,18 +406,19 @@ function animateLedEffects(timeMs){
  const b=effectiveLedBrightness();
  const futuristic=ledStudio.style==='futuristic';
  const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
- ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b*pulse);
+ ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive()*pulse);
  if(nixieMode){
   nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.58+b*.5+(ledStudio.flicker==='vintage'?(pulse<.8?.12:0):0));});
  }
- ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*b*pulse+ledPulse*.15);
+ ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
  displayBloomLayers.forEach((layer,i)=>{
   const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25;
-  layer.material.opacity=profile*b*pulse*(i===2?.9:1)+ledPulse*.035;
+  layer.material.opacity=profile*effectiveDisplayDrive()*pulse*(i===2?.9:1)+ledPulse*.02;
  });
- ledLight.intensity=((darkMode?3.2:1.75)*b*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?1.4:.9))*displaySegmentFactor;
- tableReflection.material.opacity=(darkMode?1.2:.9)*b*pulse*displaySegmentFactor*(futuristic?1.35:1);
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.76:ledStudio.particles==='reactive'?.2+ledPulse*.75:0;
+ ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?.9:.6))*displaySegmentFactor;
+ tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*pulse*displaySegmentFactor*(futuristic?1.35:1);
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.52:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
+ updateLightingBalance();
 for(let i=0;i<sparkCount;i++){
   const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
   sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
