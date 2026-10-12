@@ -87,9 +87,11 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,segments),material);
   mesh.position.set(x,y,z); mesh.castShadow=true; parent.add(mesh); return mesh;
 }
-// Main molded shell: long axis vertical, keypad and display on the front (+Z).
-roundedBox(3.08,.54,5.28,.14,edgeMat,calculator,0,0,0);
-roundedBox(2.98,.42,5.18,.12,bodyMat,calculator,0,.20,0);
+// TI-2500-inspired shell: the working face points toward +Y.
+roundedBox(3.08,.54,5.28,.18,edgeMat,calculator,0,0,0);
+roundedBox(2.98,.42,5.18,.16,bodyMat,calculator,0,.20,0);
+// Inset dark keyboard surround.
+roundedBox(2.62,.065,2.85,.09,darkMat,calculator,0,.435,-1.125);
 // Deep hooded LED well. The dark floor is recessed under the shell surface.
 roundedBox(2.5,.105,1.12,.07,edgeMat,calculator,0,.405,1.62);
 roundedBox(2.24,.018,.79,.035,mat('#160d0a',.22),calculator,0,.414,1.62);
@@ -101,7 +103,7 @@ roundedBox(2.30,.16,.19,.06,edgeMat,calculator,0,.525,1.14);
 // Clear, low-opacity lens over the recessed segments catches a subtle highlight.
 roundedBox(2.03,.018,.57,.025,lensMat,calculator,0,.433,1.62);
 // LED segments: actual lit segment geometry, driven from calculator value.
-const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],'.':['dot']};
+const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
 function makeDigit(x){
  const group=new THREE.Group(); group.position.set(x,.451,1.62); calculator.add(group);
@@ -137,11 +139,17 @@ const glowTexture=new THREE.CanvasTexture(glowCanvas);
 const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xff4b32,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false}));
 ledGlow.position.set(0,.465,1.62);ledGlow.scale.set(2.1,.63,1);calculator.add(ledGlow);
 function setLed(text){
- const str=String(text).slice(0,8); const chars=str.padStart(Math.min(8,str.length),' ');
- digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
-   const ch=chars[i]||' '; const on=(segments[ch]||[]).includes(name);
-   mesh.material=on?ledMat:ledOffMat;
- }));
+  // Right-align digits and attach each decimal point to the preceding digit.
+  const raw=String(text).slice(0,16);
+  const clean=raw.replace(/\./g,'').slice(-8);
+  const chars=clean.padStart(8,' ');
+  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
+  const dotSlot=decimalDigits>0?8-clean.length+decimalDigits-1:-1;
+  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
+    const ch=chars[i]||' ';
+    const on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
+    mesh.material=on?ledMat:ledOffMat;
+  }));
 }
 // Small printed wordmark and model text on the face.
 function textSprite(text,opts={}){
