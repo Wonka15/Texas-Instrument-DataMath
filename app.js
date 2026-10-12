@@ -305,13 +305,10 @@ const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrBut
 if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
 function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 new ResizeObserver(resize).observe(sceneEl);
-renderer.setAnimationLoop((time=0)=>{
+renderer.setAnimationLoop(()=>{
+  // Keep the render loop self-contained: the rebuilt model has no optional dust/glow
+  // animation objects, so referencing them here would throw every frame and blank the scene.
   controls.update();
-  // Animate just 22 particles and one sprite to keep the effect light on integrated graphics.
-  const positions=ledDustGeometry.attributes.position.array;
-  for(let i=0;i<ledDustCount;i++)positions[i*3+1]=.458+Math.sin(time*.0011+ledDustPhases[i])*.008;
-  ledDustGeometry.attributes.position.needsUpdate=true;
-  ledGlow.material.opacity=.26+Math.sin(time*.002)*.045;
   renderer.render(world,camera);
 });
 loadState.textContent='MODEL READY';
