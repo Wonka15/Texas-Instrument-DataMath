@@ -66,8 +66,8 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
   mesh.position.set(x,y,z); mesh.castShadow=true; parent.add(mesh); return mesh;
 }
 // Main molded shell: long axis vertical, keypad and display on the front (+Z).
-roundedBox(3.05,.42,5.25, .12,edgeMat,calculator,0,0,0);
-roundedBox(2.98,.37,5.18,.1,bodyMat,calculator,0,.18,0);
+roundedBox(3.08,.54,5.28,.14,edgeMat,calculator,0,0,0);
+roundedBox(2.98,.42,5.18,.12,bodyMat,calculator,0,.20,0);
 // Raised rim and dark display window.
 roundedBox(2.48,.075,1.05,.04,edgeMat,calculator,0,.405,1.62);
 roundedBox(2.28,.065,.83,.03,darkMat,calculator,0,.45,1.62);
