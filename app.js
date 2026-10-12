@@ -78,7 +78,7 @@ const keyMat = new THREE.MeshPhysicalMaterial({ color:'#5a402b', roughness:.32, 
 const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#77784f', roughness:.35, metalness:0, clearcoat:.24, clearcoatRoughness:.35 });
 const orangeKeyMat = new THREE.MeshPhysicalMaterial({color:'#d76a2c',roughness:.34,clearcoat:.22,clearcoatRoughness:.34});
 const inkMat = mat('#38281b', .65);
-const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c',depthTest:false,toneMapped:false });
+const ledMat = new THREE.MeshBasicMaterial({ color:'#ff2418',depthTest:false,toneMapped:false });
 const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e',depthTest:false,toneMapped:false });
 const lensMat = new THREE.MeshBasicMaterial({ color:'#160807', depthWrite:true, depthTest:true });
 const whiteMat = mat('#e5d3b2', .5);
@@ -136,6 +136,72 @@ function makeDigit(x){
 // Keep the numeral row aligned toward the right, like the live 2D calculator display.
 // Camera-right runs opposite world X in this front-facing view, so reverse the digit-group order.
 for(let i=0;i<8;i++)makeDigit(.97-i*.26);
+// Soft, additive ruby-red halo behind the seven-segment display.
+function makeLedGlowTexture(){
+ const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ const gradient=ctx.createRadialGradient(128,64,3,128,64,62);
+ gradient.addColorStop(0,'rgba(255,25,10,0.72)');
+ gradient.addColorStop(.28,'rgba(255,22,8,0.35)');
+ gradient.addColorStop(.62,'rgba(255,18,6,0.12)');
+ gradient.addColorStop(1,'rgba(255,0,0,0)');
+ ctx.fillStyle=gradient;ctx.fillRect(0,0,256,128);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ return texture;
+}
+const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({
+ map:makeLedGlowTexture(),color:0xff2a16,transparent:true,opacity:.88,
+ blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,toneMapped:false
+}));
+ledGlow.position.set(0,.477,.88);ledGlow.scale.set(2.8,.92,1);ledGlow.renderOrder=18;calculator.add(ledGlow);
+const ledLight=new THREE.PointLight(0xff1b0b,1.7,2.8,2);
+ledLight.position.set(0,.66,.88);calculator.add(ledLight);
+
+// Tiny floating phosphor sparks. Positions stay in the display's local coordinate
+// space so the effect follows the calculator naturally when the model is rotated.
+const sparkCount=54;
+const sparkPositions=new Float32Array(sparkCount*3);
+const sparkColors=new Float32Array(sparkCount*3);
+const sparkLife=new Float32Array(sparkCount);
+const sparkSpeed=new Float32Array(sparkCount);
+const sparkGeometry=new THREE.BufferGeometry();
+function respawnSpark(i,initial=false){
+ const k=i*3;
+ sparkPositions[k]=(Math.random()-.5)*2.28;
+ sparkPositions[k+1]=.49+Math.random()*.045;
+ sparkPositions[k+2]=.61+Math.random()*.54;
+ sparkLife[i]=initial?Math.random():0;
+ sparkSpeed[i]=.12+Math.random()*.34;
+ sparkColors[k]=1;
+ sparkColors[k+1]=.12+Math.random()*.34;
+ sparkColors[k+2]=.035+Math.random()*.08;
+}
+for(let i=0;i<sparkCount;i++)respawnSpark(i,true);
+sparkGeometry.setAttribute('position',new THREE.BufferAttribute(sparkPositions,3));
+sparkGeometry.setAttribute('color',new THREE.BufferAttribute(sparkColors,3));
+const sparkMaterial=new THREE.PointsMaterial({
+ size:.032,color:0xffffff,vertexColors:true,transparent:true,opacity:.84,
+ blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,sizeAttenuation:true
+});
+const ledSparks=new THREE.Points(sparkGeometry,sparkMaterial);
+ledSparks.frustumCulled=false;ledSparks.renderOrder=22;calculator.add(ledSparks);
+function animateLedEffects(timeMs){
+ const t=timeMs*.001;
+ ledGlow.material.opacity=.70+Math.sin(t*2.1)*.10+Math.sin(t*5.7)*.035;
+ ledLight.intensity=1.45+Math.sin(t*2.1)*.22;
+ for(let i=0;i<sparkCount;i++){
+  const k=i*3;
+  sparkLife[i]+=sparkSpeed[i]/60;
+  sparkPositions[k+2]+=.0025+sparkSpeed[i]*.0015;
+  sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
+  const twinkle=.45+.55*Math.abs(Math.sin(t*7.5+i*2.31));
+  sparkColors[k]=twinkle;
+  sparkColors[k+1]=twinkle*(.12+(i%5)*.045);
+  if(sparkLife[i]>1||sparkPositions[k+2]>1.22)respawnSpark(i);
+ }
+ sparkGeometry.attributes.position.needsUpdate=true;
+ sparkGeometry.attributes.color.needsUpdate=true;
+}
 function setLed(text){
  const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
@@ -331,10 +397,9 @@ const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrBut
 if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
 function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 new ResizeObserver(resize).observe(sceneEl);
-renderer.setAnimationLoop(()=>{
-  // Keep the render loop self-contained: the rebuilt model has no optional dust/glow
-  // animation objects, so referencing them here would throw every frame and blank the scene.
+renderer.setAnimationLoop((time)=>{
   controls.update();
+  animateLedEffects(time);
   renderer.render(world,camera);
 });
 loadState.textContent='MODEL READY';
