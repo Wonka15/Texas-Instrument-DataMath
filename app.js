@@ -250,21 +250,25 @@ function flash3DKey(action){
 }
 function applyLedStudio(){
  const b=effectiveLedBrightness();
- ledMat.color.copy(ledBaseColor).multiplyScalar(b);
- const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.58:ledStudio.style==='futuristic'?1.38:1.08;
- ledGlow.scale.set(2.8*styleScale,.92*styleScale,1);
- ledGlow.material.color.set(ledStudio.style==='futuristic'?0xff4935:0xff2a16);
- ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.12:ledStudio.style==='futuristic'?1.28:1)*displaySegmentFactor;
- // Layered, wide bloom spreads the red phosphor glow across the entire display window.
+ const futuristic=ledStudio.style==='futuristic';
+ const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:1.08;
+ // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
+ ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b);
+ ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
+ ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
+ ledGlow.material.opacity=futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:.88;
+ ledLight.color.set(futuristic?0xff5637:0xff1b0b);
+ ledLight.intensity=(darkMode?3.2:1.75)*b*(ledStudio.style==='cinematic'?1.12:futuristic?1.75:1)*displaySegmentFactor;
+ // Layered bloom spreads the phosphor haze across the entire display window.
  displayBloomLayers.forEach((layer,i)=>{
-  layer.material.color.set(ledStudio.style==='futuristic'?0xff382b:0xff2015);
-  layer.material.opacity=(ledStudio.style==='clean'?.10:ledStudio.style==='authentic'?.18:.25)*b*(i===2?.8:1);
+  layer.material.color.set(futuristic?0xff5037:0xff2015);
+  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:.25)*b*(i===2?.9:1);
   layer.scale.set((1.25+i*.18)*styleScale,(.48+i*.08)*styleScale,1);
  });
- tableReflection.material.opacity=(darkMode?1.2:.9)*b*displaySegmentFactor;
+ tableReflection.material.opacity=(darkMode?1.2:.9)*b*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
  ledSparks.visible=ledStudio.particles!=='off';
- sparkMaterial.size=ledStudio.particles==='ambient'?.048:ledStudio.style==='futuristic'?.042:.032;
+ sparkMaterial.size=ledStudio.particles==='ambient'?.052:futuristic?.06:.032;
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.95:ledStudio.particles==='reactive'?.75:0;
 }
 function triggerLedActivity(action){
@@ -282,19 +286,26 @@ function triggerLedActivity(action){
 function animateLedEffects(timeMs){
  const t=timeMs*.001,dt=lastLedFrame?Math.min(.05,Math.max(0,(timeMs-lastLedFrame)*.001)):1/60;
  lastLedFrame=timeMs;
- const amount=ledStudio.flicker==='subtle'?.035:ledStudio.flicker==='vintage'?.16:0;
- // Vintage mode adds irregular, low-amplitude voltage sag to feel like aging hardware.
- const vintageDip=ledStudio.flicker==='vintage'&&((Math.sin(t*11.7)>.965)?-.18:0)+ (ledStudio.flicker==='vintage'?Math.sin(t*3.4)*.035:0);
- const pulse=ledStudio.flicker==='off'?1:Math.max(.55,1+Math.sin(t*2.1)*amount+Math.sin(t*5.7)*amount*.32+vintageDip);
+ const vintage=ledStudio.flicker==='vintage';
+ const amount=ledStudio.flicker==='subtle'?.035:vintage?.10:0;
+ // Voltage sag and short irregular dips affect the actual 3D digits and the bloom.
+ const irregular=Math.sin(t*17.3)*Math.sin(t*7.1)*Math.sin(t*2.9);
+ const dropout=vintage&&Math.sin(t*8.9+Math.sin(t*2.3)*1.8)>.76?-.34:0;
+ const pulse=ledStudio.flicker==='off'?1:Math.max(vintage?.42:.82,1+Math.sin(t*2.1)*amount+Math.sin(t*5.7)*amount*.32+(vintage?irregular*.13+dropout:0));
  ledPulse=Math.max(0,ledPulse-dt*1.9);
  const b=effectiveLedBrightness();
- const base=ledStudio.style==='cinematic'?.9:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.46:1;
- ledGlow.material.opacity=Math.min(1,base*b*pulse+ledPulse*.15);
- displayBloomLayers.forEach((layer,i)=>{layer.material.opacity=(ledStudio.style==='clean'?.10:ledStudio.style==='authentic'?.18:.25)*b*pulse*(i===2?.8:1)+ledPulse*.035;});
- ledLight.intensity=((darkMode?3.2:1.75)*b*pulse+ledPulse*(darkMode?1.4:.9))*displaySegmentFactor;
- tableReflection.material.opacity=(darkMode?1.2:.9)*b*pulse*displaySegmentFactor;
+ const futuristic=ledStudio.style==='futuristic';
+ const base=ledStudio.style==='cinematic'?.9:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
+ ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b*pulse);
+ ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*b*pulse+ledPulse*.15);
+ displayBloomLayers.forEach((layer,i)=>{
+  const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:.25;
+  layer.material.opacity=profile*b*pulse*(i===2?.9:1)+ledPulse*.035;
+ });
+ ledLight.intensity=((darkMode?3.2:1.75)*b*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?1.4:.9))*displaySegmentFactor;
+ tableReflection.material.opacity=(darkMode?1.2:.9)*b*pulse*displaySegmentFactor*(futuristic?1.35:1);
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.95:ledStudio.particles==='reactive'?.2+ledPulse*.75:0;
- for(let i=0;i<sparkCount;i++){
+for(let i=0;i<sparkCount;i++){
   const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
   sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
   sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
