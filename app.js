@@ -169,27 +169,48 @@ function drawNixieGlyph(canvas,activeDigit,brightness=1){
 }
 for(let i=0;i<8;i++){
  const tube=new THREE.Group();
- tube.position.set(.97-i*.26,.0,.88);
+ // The TI calculator face points toward +Y; digits sit upright on that vertical face.
+ tube.position.set(.97-i*.26,.405,.88);
  calculator.add(tube);
- const glass=new THREE.Mesh(
-  new THREE.CylinderGeometry(.108,.108,.12,32,1,true),
-  new THREE.MeshPhysicalMaterial({color:'#f3b17a',transparent:true,opacity:.16,roughness:.08,metalness:.05,clearcoat:1,clearcoatRoughness:.08,side:THREE.DoubleSide,depthWrite:false})
- );
- glass.position.set(0,.535,0);glass.renderOrder=24;tube.add(glass);
- const topRing=new THREE.Mesh(new THREE.TorusGeometry(.104,.009,8,32),new THREE.MeshStandardMaterial({color:'#b77a4b',metalness:.48,roughness:.28}));
- topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
- const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
+
+ // A real Nixie-style envelope is a vertical glass capsule, not a flat ring on the top.
+ const glassMaterial=new THREE.MeshPhysicalMaterial({
+  color:'#ffd0a0',transparent:true,opacity:.23,roughness:.08,metalness:.02,
+  clearcoat:1,clearcoatRoughness:.06,side:THREE.DoubleSide,depthWrite:false
+ });
+ const glass=new THREE.Mesh(new THREE.CapsuleGeometry(.094,.145,8,24),glassMaterial);
+ glass.rotation.x=Math.PI/2; // Capsule's long axis becomes world Z (upright on the calculator face).
+ glass.position.set(0,.105,0);glass.renderOrder=24;tube.add(glass);
+
+ // Thin metal collars cap the top and bottom of each glass envelope.
+ const collarMaterial=new THREE.MeshStandardMaterial({color:'#c18a59',metalness:.62,roughness:.25});
+ for(const z of [-.164,.164]){
+  const collar=new THREE.Mesh(new THREE.TorusGeometry(.092,.008,8,32),collarMaterial);
+  collar.position.set(0,.105,z);collar.renderOrder=25;tube.add(collar);
+ }
+ // Dark ceramic socket and small contact pins make the tube read as a physical component.
+ const socket=roundedBox(.16,.065,.075,.018,darkMat,tube,0,.075,-.205);
+ socket.castShadow=true;
+ for(let pin=-1;pin<=1;pin++){
+  const lead=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.055,8),collarMaterial);
+  lead.rotation.x=Math.PI/2;
+  lead.position.set(pin*.045,.075,-.255);tube.add(lead);
+ }
+
  const glyphCanvas=document.createElement('canvas');glyphCanvas.width=192;glyphCanvas.height=240;
- // Use the default slider value while building the initial tube; ledStudio is initialized below.
-  // The live brightness is applied by setNixieDigits() after startup completes.
-  drawNixieGlyph(glyphCanvas,'0',0.78);
+ // Use a safe initial brightness; the live slider is applied after startup.
+ drawNixieGlyph(glyphCanvas,'0',0.78);
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
- const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ const glyphMaterial=new THREE.MeshBasicMaterial({
+  map:glyphTexture,color:'#ffb66b',transparent:true,opacity:.9,
+  depthWrite:false,side:THREE.DoubleSide,toneMapped:false
+ });
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
- // Face the glyph plane upward toward the camera; the opposite rotation reads mirrored from above.
-  glyph.rotation.x=-Math.PI/2;glyph.scale.set(-1,-1,1); // Flip both texture axes: horizontal for camera-right and vertical to keep digits upright after rotating the plane.
-glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
+ // Face the viewer (+Y); compensate for the plane's rotated local up and camera-right axes.
+ glyph.rotation.x=-Math.PI/2;
+ glyph.scale.set(-1,-1,1);
+ glyph.position.set(0,.205,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
 }
@@ -208,7 +229,7 @@ function setNixieDigits(chars,dotSlot){
   let dot=tube.userData.decimalDot;
   if(!dot){
    dot=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),new THREE.MeshBasicMaterial({color:'#ff7b37',toneMapped:false}));
-   dot.position.set(-.065,.606,-.105);dot.renderOrder=28;tube.add(dot);tube.userData.decimalDot=dot;
+   dot.position.set(-.065,.207,-.13);dot.renderOrder=28;tube.add(dot);tube.userData.decimalDot=dot;
   }
   dot.visible=nixieMode&&i===dotSlot&&active!==' ';
  });
