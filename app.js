@@ -6,6 +6,9 @@ import { RoundedBoxGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.164.1/e
 const sceneEl = document.querySelector('#scene');
 const loadState = document.querySelector('#loadState');
 const viewLabel = document.querySelector('#viewLabel');
+const arButton = document.querySelector('#arButton');
+const arCameraFeed = document.querySelector('#arCameraFeed');
+const arHint = document.querySelector('#arHint');
 
 // Surface startup failures in the page instead of leaving an unexplained empty viewport.
 window.addEventListener('error', (event) => {
@@ -25,6 +28,8 @@ renderer.toneMappingExposure = 1.15;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.xr.enabled = true;
+renderer.setClearAlpha(0); // Transparent clear is required for camera passthrough.
+renderer.domElement.setAttribute('aria-label', 'Interactive 3D Datamath calculator');
 sceneEl.appendChild(renderer.domElement);
 
 const world = new THREE.Scene();
@@ -97,6 +102,8 @@ ground.rotation.x = -Math.PI / 2;
 ground.position.y = -.30;
 ground.receiveShadow = true;
 world.add(ground);
+// AR mode hides the virtual tabletop so the real camera/table stays visible.
+const tabletop = ground;
 const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
@@ -486,13 +493,186 @@ document.querySelectorAll('[data-orbit]').forEach(button=>button.addEventListene
  if(button.dataset.orbit==='down')controls.rotateUp(-step);
  controls.update();viewLabel.textContent='3D ORBIT VIEW';
 }));
-const vrButton=VRButton.createButton(renderer);vrButton.id='threeVrButton';vrButton.style.display='none';document.body.appendChild(vrButton);
-if('xr' in navigator){navigator.xr.isSessionSupported('immersive-vr').then(ok=>{const b=document.querySelector('#vrButton');if(ok){b.disabled=false;b.innerHTML='◇ <span>ENTER VR</span>';b.addEventListener('click',()=>vrButton.click());}else{b.disabled=true;b.innerHTML='◇ <span>VR UNAVAILABLE</span>';}}).catch(()=>{});}
+// Keep VR available on headsets that support it; the visible button stays in our UI.
+const vrButton=VRButton.createButton(renderer);
+vrButton.id='threeVrButton';vrButton.style.display='none';document.body.appendChild(vrButton);
+if (navigator.xr) {
+  navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
+    const button = document.querySelector('#vrButton');
+    button.disabled = !supported;
+    button.innerHTML = supported ? '◇ <span>ENTER VR</span>' : '◇ <span>VR UNAVAILABLE</span>';
+    if (supported) button.addEventListener('click', () => vrButton.click());
+  }).catch(() => {});
+}
+
+// Android browsers with WebXR use surface detection. iPhone/iPad Safari gets a
+// camera-backed preview because Safari does not currently expose WebXR AR.
+let arHitSource = null;
+let arPlaced = false;
+const arOriginalScale = calculator.scale.clone();
+const arOriginalPosition = calculator.position.clone();
+const arOriginalQuaternion = calculator.quaternion.clone();
+let previewStream = null;
+const arReticle = new THREE.Mesh(
+  new THREE.RingGeometry(0.12, 0.16, 32),
+  new THREE.MeshBasicMaterial({ color: 0xff6a45, side: THREE.DoubleSide })
+);
+arReticle.rotation.x = -Math.PI / 2;
+arReticle.visible = false;
+world.add(arReticle);
+
+function setArHint(message, show = true) {
+  arHint.textContent = message;
+  arHint.hidden = !show;
+}
+function setArButtonState(active, label) {
+  arButton.setAttribute('aria-pressed', String(active));
+  arButton.innerHTML = '◎ <span>' + label + '</span>';
+}
+function restoreAfterAr() {
+  arHitSource?.cancel();
+  arHitSource = null;
+  arReticle.visible = false;
+  tabletop.visible = true;
+  calculator.scale.copy(arOriginalScale);
+  calculator.position.copy(arOriginalPosition);
+  calculator.quaternion.copy(arOriginalQuaternion);
+  controls.enabled = true;
+  setArButtonState(false, 'AR MODE');
+  setArHint('', false);
+  loadState.textContent = 'MODEL READY';
+}
+async function startWebXRAr() {
+  const session = await navigator.xr.requestSession('immersive-ar', {
+    requiredFeatures: ['hit-test'],
+    optionalFeatures: ['dom-overlay'],
+    domOverlay: { root: document.body }
+  });
+  arPlaced = false;
+  tabletop.visible = false;
+  controls.enabled = false;
+  setArHint('Point at a table or floor. Tap the screen to place Datamath.');
+  await renderer.xr.setSession(session);
+
+  session.addEventListener('end', restoreAfterAr, { once: true });
+  session.addEventListener('select', () => {
+    if (!arReticle.visible) {
+      setArHint('No surface detected yet. Slowly point at a table.');
+      return;
+    }
+    calculator.position.copy(arReticle.position);
+    calculator.position.y += 0.025;
+    calculator.quaternion.copy(arReticle.quaternion);
+    calculator.scale.setScalar(0.045);
+    arPlaced = true;
+    setArHint('Placed! Tap another detected surface to reposition.');
+  });
+  try {
+    const viewerSpace = await session.requestReferenceSpace('viewer');
+    arHitSource = await session.requestHitTestSource({ space: viewerSpace });
+  } catch (error) {
+    console.warn('AR surface detection could not start:', error);
+    setArHint('Surface detection unavailable. Exit AR and try camera preview.');
+  }
+  setArButtonState(true, 'EXIT AR');
+  loadState.textContent = 'AR SESSION ACTIVE';
+}
+async function startCameraPreview() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setArHint('Camera preview is unavailable in this browser. Use the interactive 3D view.');
+    return;
+  }
+  previewStream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: { facingMode: { ideal: 'environment' } }
+  });
+  arCameraFeed.srcObject = previewStream;
+  await arCameraFeed.play();
+  arCameraFeed.classList.add('is-active');
+  tabletop.visible = false;
+  calculator.scale.setScalar(0.42);
+  setArButtonState(true, 'EXIT PREVIEW');
+  setArHint('Camera preview only — drag to rotate and zoom. Spatial tracking is not available in this browser.');
+  loadState.textContent = 'CAMERA PREVIEW';
+}
+function stopCameraPreview() {
+  previewStream?.getTracks().forEach((track) => track.stop());
+  previewStream = null;
+  arCameraFeed.pause();
+  arCameraFeed.srcObject = null;
+  arCameraFeed.classList.remove('is-active');
+  restoreAfterAr();
+}
+arButton.addEventListener('click', async () => {
+  try {
+    if (renderer.xr.isPresenting) {
+      await renderer.xr.getSession()?.end();
+      return;
+    }
+    if (previewStream) {
+      stopCameraPreview();
+      return;
+    }
+    if (navigator.xr && await navigator.xr.isSessionSupported('immersive-ar')) {
+      await startWebXRAr();
+    } else {
+      await startCameraPreview();
+    }
+  } catch (error) {
+    console.warn('AR could not start:', error);
+    setArHint('AR could not start. Check camera permissions and HTTPS, then try again.');
+    setArButtonState(false, 'AR MODE');
+    tabletop.visible = true;
+    controls.enabled = true;
+  }
+});
 function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 new ResizeObserver(resize).observe(sceneEl);
-renderer.setAnimationLoop((time)=>{
+renderer.setAnimationLoop((time, frame)=>{
   controls.update();
+  // Track the nearest real surface while an immersive AR session is active.
+  if (frame && arHitSource) {
+    const referenceSpace = renderer.xr.getReferenceSpace();
+    const hits = frame.getHitTestResults(arHitSource);
+    if (hits.length && referenceSpace) {
+      const pose = hits[0].getPose(referenceSpace);
+      if (pose) {
+        arReticle.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+        arReticle.quaternion.setFromRotationMatrix(new THREE.Matrix4().fromArray(pose.transform.matrix));
+        arReticle.visible = !arPlaced;
+      }
+    } else if (!arPlaced) {
+      arReticle.visible = false;
+    }
+  }
   animateLedEffects(time);
   renderer.render(world,camera);
+});
+// Stream KZSC directly in-page so the compact button can truly play and pause.
+const musicToggle = document.querySelector('#musicToggle');
+const kzscAudio = document.querySelector('#kzscAudio');
+musicToggle.addEventListener('click', async () => {
+  if (kzscAudio.paused) {
+    try {
+      await kzscAudio.play();
+      musicToggle.innerHTML = 'Ⅱ KZSC';
+      musicToggle.setAttribute('aria-pressed', 'true');
+      musicToggle.title = 'Pause KZSC 88.1 FM';
+    } catch (error) {
+      console.warn('KZSC stream playback failed:', error);
+      musicToggle.innerHTML = '▶ KZSC';
+      musicToggle.setAttribute('aria-pressed', 'false');
+      setArHint('KZSC playback failed. Try again or open kzsc.org.');
+    }
+  } else {
+    kzscAudio.pause();
+    musicToggle.innerHTML = '▶ KZSC';
+    musicToggle.setAttribute('aria-pressed', 'false');
+    musicToggle.title = 'Play KZSC 88.1 FM';
+  }
+});
+kzscAudio.addEventListener('ended', () => {
+  musicToggle.innerHTML = '▶ KZSC';
+  musicToggle.setAttribute('aria-pressed', 'false');
 });
 loadState.textContent='MODEL READY';
