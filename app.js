@@ -42,7 +42,8 @@ const darkMat = mat('#382a20', .42);
 const keyMat = mat('#5a402b', .35);
 const keyTopMat = mat('#6b4e34', .38);
 const inkMat = mat('#38281b', .65);
-const ledMat = new THREE.MeshStandardMaterial({ color:'#ff2117', emissive:'#ff160e', emissiveIntensity:2.4, roughness:.25 });
+const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c' });
+const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e' });
 const whiteMat = mat('#e5d3b2', .5);
 const woodMat = new THREE.MeshStandardMaterial({color:'#4a2e1b',roughness:.88});
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=-Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
@@ -86,8 +87,7 @@ function setLed(text){
  const str=String(text).slice(0,8); const chars=str.padStart(Math.min(8,str.length),' ');
  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
    const ch=chars[i]||' '; const on=(segments[ch]||[]).includes(name);
-   mesh.material=on?ledMat:mesh.material; mesh.material.color?.set(on?'#ff241a':'#32100e');
-   if(on){mesh.material.emissive?.set('#ff130a');mesh.material.emissiveIntensity=2.1;}
+   mesh.material=on?ledMat:ledOffMat;
  }));
 }
 // Small printed wordmark and model text on the face.
