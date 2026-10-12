@@ -188,7 +188,8 @@ for(let i=0;i<8;i++){
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
  const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
  // Face the glyph plane upward toward the camera; the opposite rotation reads mirrored from above.
-  glyph.rotation.x=-Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
+  glyph.rotation.x=-Math.PI/2;glyph.scale.x=-1; // Camera-right is world -X, so flip the texture horizontally to keep numerals readable.
+glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
 }
