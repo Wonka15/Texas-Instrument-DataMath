@@ -936,33 +936,59 @@ renderer.setAnimationLoop((time, frame)=>{
   renderer.render(world,camera);
 });
 // --- 11. Optional KZSC audio stream ------------------------------------------
-// The compact button controls the audio element in index.html. Browser policies
-// or a station outage can still prevent playback.
-// Stream KZSC directly in-page so the compact button can truly play and pause.
+// Keep the compact player resilient: try the high-quality feed first, then the
+// lower-bandwidth feed if the station reports a stream error.
 const musicToggle = document.querySelector('#musicToggle');
 const kzscAudio = document.querySelector('#kzscAudio');
+const kzscStreams = [
+  'https://kzscfms1-geckohost.radioca.st/kzschigh',
+  'https://kzscfms1-geckohost.radioca.st/kzsclow'
+];
+let kzscStreamIndex = 0;
+let kzscFallbackTried = false;
+
+function setKzscButton(playing) {
+  musicToggle.innerHTML = playing ? 'Ⅱ KZSC' : '▶ KZSC';
+  musicToggle.setAttribute('aria-pressed', String(playing));
+  musicToggle.title = playing ? 'Pause KZSC 88.1 FM' : 'Play KZSC 88.1 FM';
+}
+
 musicToggle.addEventListener('click', async () => {
-  if (kzscAudio.paused) {
-    try {
-      await kzscAudio.play();
-      musicToggle.innerHTML = 'Ⅱ KZSC';
-      musicToggle.setAttribute('aria-pressed', 'true');
-      musicToggle.title = 'Pause KZSC 88.1 FM';
-    } catch (error) {
-      console.warn('KZSC stream playback failed:', error);
-      musicToggle.innerHTML = '▶ KZSC';
-      musicToggle.setAttribute('aria-pressed', 'false');
-      setArHint('KZSC playback failed. Try again or open kzsc.org.');
-    }
-  } else {
+  if (!kzscAudio.paused) {
     kzscAudio.pause();
-    musicToggle.innerHTML = '▶ KZSC';
-    musicToggle.setAttribute('aria-pressed', 'false');
-    musicToggle.title = 'Play KZSC 88.1 FM';
+    setKzscButton(false);
+    return;
+  }
+
+  try {
+    await kzscAudio.play();
+    setKzscButton(true);
+  } catch (error) {
+    console.warn('KZSC stream playback failed:', error);
+    setKzscButton(false);
+    setArHint('KZSC could not start. Check your connection or open the official KZSC listen page.');
   }
 });
-kzscAudio.addEventListener('ended', () => {
-  musicToggle.innerHTML = '▶ KZSC';
-  musicToggle.setAttribute('aria-pressed', 'false');
+
+// If the high-quality stream errors, retry once using the lower-bandwidth feed.
+kzscAudio.addEventListener('error', () => {
+  if (kzscFallbackTried || kzscStreamIndex >= kzscStreams.length - 1) {
+    setKzscButton(false);
+    setArHint('KZSC stream is unavailable. Try the official station page at kzsc.org/listen.');
+    return;
+  }
+
+  kzscFallbackTried = true;
+  kzscStreamIndex = 1;
+  kzscAudio.src = kzscStreams[kzscStreamIndex];
+  kzscAudio.load();
+  if (!kzscAudio.paused) {
+    kzscAudio.play().then(() => setKzscButton(true)).catch((error) => {
+      console.warn('KZSC fallback stream playback failed:', error);
+      setKzscButton(false);
+    });
+  }
 });
+
+kzscAudio.addEventListener('ended', () => setKzscButton(false));
 loadState.textContent='MODEL READY';
