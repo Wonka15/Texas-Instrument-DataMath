@@ -641,21 +641,23 @@ function press(action,label){
  show();
 }
 const keypad=document.querySelector('#keypad');
-keys.forEach(([label,action,row,col])=>{
- const b=document.createElement('button');
- const isFunction=['CE/D','C'].includes(label),isOperator=['÷','×','−','+'].includes(label);
- b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
- b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='C'?'Clear all':label);
- b.style.gridRow=String(row);b.style.gridColumn=label==='0'?'1 / span 2':String(col);
- b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),90);});
- keypad.appendChild(b);
-});
-window.addEventListener('keydown',e=>{
- if(e.metaKey||e.ctrlKey||e.altKey)return;
- const map={'Enter':'equals','=':'equals','Escape':'clear','Backspace':'ce','+':'op:+','-':'op:-','*':'op:*','/':'op:/','.':'decimal'};
- let action=map[e.key];if(/^\d$/.test(e.key))action='num:'+e.key;
- if(action){e.preventDefault();press(action,e.key);}
-});
+if(!window.__datamathFallbackActive){
+ keys.forEach(([label,action,row,col])=>{
+  const b=document.createElement('button');
+  const isFunction=['CE/D','C'].includes(label),isOperator=['÷','×','−','+'].includes(label);
+  b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
+  b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='C'?'Clear all':label);
+  b.style.gridRow=String(row);b.style.gridColumn=label==='0'?'1 / span 2':String(col);
+  b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),90);});
+  keypad.appendChild(b);
+ });
+ window.addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const map={'Enter':'equals','=':'equals','Escape':'clear','Backspace':'ce','+':'op:+','-':'op:-','*':'op:*','/':'op:/','.':'decimal'};
+  let action=map[e.key];if(/^\d$/.test(e.key))action='num:'+e.key;
+  if(action){e.preventDefault();press(action,e.key);}
+ });
+}
 show();
 wireLedStudio();
 
@@ -917,3 +919,5 @@ kzscAudio.addEventListener('ended', () => {
   musicToggle.setAttribute('aria-pressed', 'false');
 });
 loadState.textContent='MODEL READY';
+// Let the standalone fallback know the full 3D application completed startup.
+window.__datamathAppReady = true;
