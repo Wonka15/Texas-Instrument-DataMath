@@ -19,6 +19,9 @@ window.addEventListener('unhandledrejection', (event) => {
   if (loadState) loadState.textContent = '3D MODULE ERROR — CHECK CONNECTION';
   console.error('Datamath 3D module error:', event.reason);
 });
+// --- 1. Create the renderer, scene, and camera --------------------------------
+// The renderer draws the 3D scene into the canvas. Its transparent background
+// lets the camera feed show behind the model in preview mode.
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 renderer.setSize(sceneEl.clientWidth, sceneEl.clientHeight);
@@ -52,6 +55,8 @@ controls.minZoom = 0.7;
 controls.maxZoom = 2.4;
 controls.maxPolarAngle = Math.PI; // Permit an exact rear/bottom orthographic inspection view.
 
+// --- 2. Lighting and reusable materials --------------------------------------
+// These lights make the plastic, glass, keys, and wooden desk easier to read.
 const ambientLight = new THREE.HemisphereLight(0xffe4c0, 0x21170f, 2.0); world.add(ambientLight);
 const keyLight = new THREE.DirectionalLight(0xffe1b7, 3.0);
 keyLight.position.set(-4, 8, 5); keyLight.castShadow = true; keyLight.shadow.mapSize.set(1024, 1024); world.add(keyLight);
@@ -104,6 +109,9 @@ ground.receiveShadow = true;
 world.add(ground);
 // AR mode hides the virtual tabletop so the real camera/table stays visible.
 const tabletop = ground;
+// --- 3. Build the calculator model -------------------------------------------
+// Grouping the parts lets the whole calculator rotate, scale, and move as one
+// object while its buttons and display segments stay attached.
 const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
@@ -129,6 +137,9 @@ roundedBox(2.54,.09,.12,.04,bodyMat,calculator,0,.445,1.20);
 roundedBox(.12,.09,.68,.04,bodyMat,calculator,-1.22,.445,.88);
 roundedBox(.12,.09,.68,.04,bodyMat,calculator,1.22,.445,.88);
 
+// --- 4. LED and Nixie display geometry ---------------------------------------
+// The LED is built from small lit/unlit segments; Nixie mode uses warm tube
+// geometry. Both displays are created once, then updated as the user types.
 // Seven-segment LED digits. Segments are attached just above the display lens.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
@@ -624,6 +635,9 @@ function clickSound(freq=780,duration=.055){
 }
 document.querySelector('#soundToggle').addEventListener('click',e=>{soundEnabled=!soundEnabled;e.currentTarget.textContent=soundEnabled?'♫ SOUND ON':'♫ SOUND OFF';e.currentTarget.setAttribute('aria-pressed',String(soundEnabled));if(soundEnabled)clickSound(950,.06);});
 
+// --- 7. Calculator input and arithmetic --------------------------------------
+// This state machine avoids eval(): it tracks the number, pending operator, and
+// previous equals operation explicitly for predictable arithmetic.
 // Arithmetic state machine. It avoids eval() and handles repeated equals, decimals and divide-by-zero.
 let current='0',stored=null,operator=null,waiting=false,lastOperand=null,lastOperator=null;
 const display=document.querySelector('#display');
@@ -672,6 +686,9 @@ window.addEventListener('keydown',e=>{
 show();
 wireLedStudio();
 
+// --- 8. Let users press the 3D keycaps ---------------------------------------
+// Raycasting checks which 3D object is under a pointer tap. Only objects tagged
+// as calculator keys trigger an arithmetic action.
 // Raycast 3D keycaps so the physical model is also pressable.
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 renderer.domElement.addEventListener('pointerdown',e=>{
@@ -758,6 +775,9 @@ vrButton.addEventListener('click',async()=>{
  }
 });
 
+// --- 10. Augmented reality and camera preview -------------------------------
+// Supported Android WebXR browsers can place the model on a detected surface.
+// Other browsers use a camera preview, which is not the same as spatial AR.
 // Android browsers with WebXR use surface detection. iPhone/iPad Safari gets a
 // camera-backed preview because Safari does not currently expose WebXR AR.
 let arHitSource = null;
@@ -902,6 +922,9 @@ renderer.setAnimationLoop((time, frame)=>{
   animateLedEffects(time);
   renderer.render(world,camera);
 });
+// --- 11. Optional KZSC audio stream ------------------------------------------
+// The compact button controls the audio element in index.html. Browser policies
+// or a station outage can still prevent playback.
 // Stream KZSC directly in-page so the compact button can truly play and pause.
 const musicToggle = document.querySelector('#musicToggle');
 const kzscAudio = document.querySelector('#kzscAudio');
