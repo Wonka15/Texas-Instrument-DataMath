@@ -101,7 +101,7 @@
         if (!window.__datamathFallbackActive || event.metaKey || event.ctrlKey || event.altKey) return;
         const map = { Enter: 'equals', '=': 'equals', Escape: 'clear', Backspace: 'ce', '+': 'op:+', '-': 'op:-', '*': 'op:*', '/': 'op:/', '.': 'decimal' };
         let action = map[event.key];
-        if (/^\\d$/.test(event.key)) action = 'num:' + event.key;
+        if (/^\d$/.test(event.key)) action = 'num:' + event.key;
         if (action) { event.preventDefault(); press(action); }
       });
     }
