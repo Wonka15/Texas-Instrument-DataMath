@@ -156,14 +156,26 @@ function drawNixieGlyph(canvas,activeDigit,brightness=1){
  const ctx=canvas.getContext('2d');
  ctx.clearRect(0,0,canvas.width,canvas.height);
  ctx.textAlign='center';ctx.textBaseline='middle';
- // Every cathode is faintly visible through the glass; the selected numeral glows brighter.
+ const active=String(activeDigit);
+ const drive=Math.max(.52,Math.min(1,brightness));
+ // Faint offset cathodes give the tube depth, while the selected digit stays crisp and readable.
  for(let digit=0;digit<=9;digit++){
+  const selected=String(digit)===active;
   ctx.save();
-  ctx.font='bold 190px Georgia, serif';
-  ctx.shadowColor=String(digit)===String(activeDigit)?'#fff0bd':'#ff6b27';
-  ctx.shadowBlur=String(digit)===String(activeDigit)?4+22*brightness:2;
-  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,248,218,'+(0.12+0.88*brightness)+')':'rgba(255,124,54,.09)';
-  ctx.fillText(String(digit),96+(digit%3-1)*1.4,120+(digit%4-1.5)*.8);
+  ctx.font='bold 244px Georgia, serif';
+  ctx.lineJoin='round';
+  ctx.shadowColor=selected?'#ff4b16':'#d94b20';
+  ctx.shadowBlur=selected?16+36*drive:1;
+  ctx.fillStyle=selected
+   ? 'rgba(255,246,211,'+(.86+.14*drive)+')'
+   : 'rgba(255,106,48,.055)';
+  const offset=selected?0:((digit%3)-1)*1.1;
+  ctx.fillText(String(digit),128+offset,160+((digit%4)-1.5)*.55);
+  if(selected){
+   ctx.shadowBlur=3;
+   ctx.fillStyle='#fff4cf';
+   ctx.fillText(active,128,160);
+  }
   ctx.restore();
  }
 }
@@ -179,12 +191,12 @@ for(let i=0;i<8;i++){
  const topRing=new THREE.Mesh(new THREE.TorusGeometry(.104,.009,8,32),new THREE.MeshStandardMaterial({color:'#b77a4b',metalness:.48,roughness:.28}));
  topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
  const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
- const glyphCanvas=document.createElement('canvas');glyphCanvas.width=192;glyphCanvas.height=240;
+ const glyphCanvas=document.createElement('canvas');glyphCanvas.width=256;glyphCanvas.height=320;
  drawNixieGlyph(glyphCanvas,'0',effectiveLedBrightness());
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
- const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ const glyphMaterial=new THREE.MeshBasicMaterial({map:glyphTexture,color:'#fff0c6',transparent:true,opacity:1,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,side:THREE.DoubleSide,toneMapped:false});
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
- const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
+ const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.238,.292),glyphMaterial);
  glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
  tube.visible=false;
  nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
@@ -198,8 +210,8 @@ function setNixieDigits(chars,dotSlot){
   const material=glyph.material;
   drawNixieGlyph(nixieGlyphCanvases[i],active,effectiveLedBrightness());
   nixieGlyphTextures[i].needsUpdate=true;
-  material.color.set('#ff9b54');
-  material.opacity=active===' '?0:.15+.85*effectiveLedBrightness();
+  material.color.set('#fff0c6');
+  material.opacity=active===' '?0:1;
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
   if(!dot){
@@ -264,23 +276,32 @@ const sparkPositions=new Float32Array(sparkCount*3);
 const sparkColors=new Float32Array(sparkCount*3);
 const sparkLife=new Float32Array(sparkCount);
 const sparkSpeed=new Float32Array(sparkCount);
+const sparkVelocityX=new Float32Array(sparkCount);
+const sparkVelocityY=new Float32Array(sparkCount);
+const sparkVelocityZ=new Float32Array(sparkCount);
 const sparkGeometry=new THREE.BufferGeometry();
 function respawnSpark(i,initial=false){
  const k=i*3;
- sparkPositions[k]=(Math.random()-.5)*2.28;
- sparkPositions[k+1]=.49+Math.random()*.045;
- sparkPositions[k+2]=.61+Math.random()*.54;
- sparkLife[i]=initial?Math.random():0;
- sparkSpeed[i]=.12+Math.random()*.34;
+ // Sparks erupt from the calculator's rim and display edge, then arc outward like embers.
+ const side=Math.random()<.5?-1:1;
+ const edge=Math.random();
+ sparkPositions[k]=edge<.52?side*(1.02+Math.random()*.18):(Math.random()-.5)*2.18;
+ sparkPositions[k+1]=.49+Math.random()*.035;
+ sparkPositions[k+2]=edge<.52?-.45+Math.random()*1.85:.72+Math.random()*.62;
+ sparkLife[i]=initial?Math.random()*.72:0;
+ sparkSpeed[i]=.7+Math.random()*1.35;
+ sparkVelocityX[i]=(sparkPositions[k]>=0?1:-1)*(.18+Math.random()*.95)+(Math.random()-.5)*.65;
+ sparkVelocityY[i]=.28+Math.random()*.95;
+ sparkVelocityZ[i]=.3+Math.random()*1.45;
  sparkColors[k]=1;
- sparkColors[k+1]=.12+Math.random()*.34;
- sparkColors[k+2]=.035+Math.random()*.08;
+ sparkColors[k+1]=.035+Math.random()*.23;
+ sparkColors[k+2]=.005+Math.random()*.035;
 }
 for(let i=0;i<sparkCount;i++)respawnSpark(i,true);
 sparkGeometry.setAttribute('position',new THREE.BufferAttribute(sparkPositions,3));
 sparkGeometry.setAttribute('color',new THREE.BufferAttribute(sparkColors,3));
 const sparkMaterial=new THREE.PointsMaterial({
- size:.032,color:0xffffff,vertexColors:true,transparent:true,opacity:.84,
+ size:.052,color:0xffffff,vertexColors:true,transparent:true,opacity:.92,
  blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false,sizeAttenuation:true
 });
 const ledSparks=new THREE.Points(sparkGeometry,sparkMaterial);
@@ -378,8 +399,8 @@ function applyLedStudio(){
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
  ledSparks.visible=ledStudio.particles!=='off';
- sparkMaterial.size=ledStudio.particles==='ambient'?.066:futuristic?.06:.032;
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.76:ledStudio.particles==='reactive'?.75:0;
+ sparkMaterial.size=ledStudio.particles==='ambient'?.075:futuristic?.06:.042;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.94:ledStudio.particles==='reactive'?.82:0;
 }
 function triggerLedActivity(action){
  if(ledStudio.particles==='off')return;
@@ -388,8 +409,12 @@ function triggerLedActivity(action){
   const count=action==='equals'?24:action==='clear'?16:9;
   for(let n=0;n<count;n++){
    const i=(Math.random()*sparkCount)|0,k=i*3;
-   sparkPositions[k]=(Math.random()-.5)*2.18;sparkPositions[k+1]=.50+Math.random()*.025;
-   sparkPositions[k+2]=.62+Math.random()*.50;sparkLife[i]=0;sparkSpeed[i]=.65+Math.random()*.9;
+   respawnSpark(i);
+   sparkLife[i]=0;
+   sparkSpeed[i]=1.15+Math.random()*1.45;
+   sparkVelocityX[i]=(Math.random()-.5)*2.5;
+   sparkVelocityY[i]=.65+Math.random()*1.15;
+   sparkVelocityZ[i]=.75+Math.random()*1.65;
   }
  }
 }
@@ -408,7 +433,7 @@ function animateLedEffects(timeMs){
  const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive()*pulse);
  if(nixieMode){
-  nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.15+.85*b+(ledStudio.flicker==='vintage'?(pulse<.8?.08:0):0));});
+  nixieDigitMaterials.forEach(material=>{material.opacity=1;});
  }
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
  displayBloomLayers.forEach((layer,i)=>{
@@ -420,12 +445,19 @@ function animateLedEffects(timeMs){
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.52:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
  updateLightingBalance();
 for(let i=0;i<sparkCount;i++){
-  const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
-  sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
-  sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
-  const twinkle=.45+.55*Math.abs(Math.sin(t*7.5+i*2.31));
-  sparkColors[k]=twinkle;sparkColors[k+1]=twinkle*(.12+(i%5)*.045);
-  if(sparkLife[i]>1||sparkPositions[k+2]>1.22)respawnSpark(i);
+  const k=i*3;
+  sparkLife[i]+=sparkSpeed[i]*dt*.34;
+  sparkPositions[k]+=sparkVelocityX[i]*dt;
+  sparkPositions[k+1]+=sparkVelocityY[i]*dt;
+  sparkPositions[k+2]+=sparkVelocityZ[i]*dt;
+  // Gravity bends each ember back down slightly; flicker shifts from yellow-hot to deep red.
+  sparkVelocityZ[i]-=1.05*dt;
+  const age=Math.min(1,sparkLife[i]);
+  const twinkle=(.62+.38*Math.abs(Math.sin(t*13+i*2.31)))*(1-age*.52);
+  sparkColors[k]=twinkle;
+  sparkColors[k+1]=twinkle*(.07+(i%5)*.038);
+  sparkColors[k+2]=twinkle*.012;
+  if(sparkLife[i]>1.05||Math.abs(sparkPositions[k])>1.75||sparkPositions[k+1]>1.6||sparkPositions[k+2]<-.85||sparkPositions[k+2]>2.45)respawnSpark(i);
  }
  sparkGeometry.attributes.position.needsUpdate=true;sparkGeometry.attributes.color.needsUpdate=true;
 }
