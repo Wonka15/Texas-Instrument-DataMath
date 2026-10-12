@@ -22,7 +22,9 @@ world.background = null;
 // Orthographic projection keeps proportions stable for reference-style inspection views.
 const viewHeight = 6.4;
 const camera = new THREE.OrthographicCamera(-viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight / 2, -viewHeight / 2, .1, 100);
-const initialCamera = new THREE.Vector3(0, 5.4, 9.5);
+// The keypad/branding run along the Z axis: positive Z is the top of the face.
+// View from the opposite Z end so the calculator reads upright (brand, display, keys).
+const initialCamera = new THREE.Vector3(0, 5.4, -9.5);
 camera.position.copy(initialCamera);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
@@ -303,7 +305,8 @@ function setOrthoView(name){
     'top':new THREE.Vector3(0,0,10),
     'bottom':new THREE.Vector3(0,0,-10)
   };
-  if(name==='face'||name==='rear') camera.up.set(0,0,name==='face'?-1:1);
+  // Keep the top of the calculator (+Z) at the top of the screen in the face view.
+  if(name==='face'||name==='rear') camera.up.set(0,0,name==='face'?1:-1);
   if(name==='top'||name==='bottom') camera.up.set(0,1,0);
   camera.position.copy(positions[name]);
   camera.zoom=1;camera.updateProjectionMatrix();
