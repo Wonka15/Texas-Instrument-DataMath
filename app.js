@@ -163,7 +163,7 @@ const keys=[
 const keyMeshes=[];
 keys.forEach(([label,action],i)=>{
  const row=Math.floor(i/4),col=i%4,isBottom=row===4,wideZero=isBottom&&label==='0';
- const x=wideZero?-.62:isBottom?(col===1?0:1.24):(col-1.5)*.62,z=-.38+(2-row)*.67;
+ const x=wideZero?-.62:isBottom?(col===1?.62:1.24):(col-1.5)*.62,z=-.38+(2-row)*.67;
  const cap=new THREE.Group();cap.position.set(x,.415,z);calculator.add(cap);const width=wideZero?1.14:.48;
  roundedBox(width+.04,.11,.53,.025,darkMat,cap,0,-.01,0);
  const top=roundedBox(width,.12,.49,.035,label==='='?orangeKeyMat:(i<4?edgeMat:keyMat),cap,0,.055,0);
