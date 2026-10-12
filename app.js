@@ -105,7 +105,6 @@ roundedBox(.12,.09,.68,.04,bodyMat,calculator,1.22,.445,.88);
 // Seven-segment LED digits. Segments are attached just above the display lens.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
-const ledOffMat=new THREE.MeshBasicMaterial({color:'#32100e',depthTest:false,toneMapped:false});
 function makeDigit(x){
  const group=new THREE.Group();group.position.set(x,.467,.88);calculator.add(group);
  const specs={a:[0,.12,.145,.026],g:[0,0,.145,.026],d:[0,-.12,.145,.026],f:[-.075,.06,.026,.095],b:[.075,.06,.026,.095],e:[-.075,-.06,.026,.095],c:[.075,-.06,.026,.095],dot:[.095,-.13,.022,.022]};
