@@ -63,9 +63,9 @@ const keyMat = new THREE.MeshPhysicalMaterial({ color:'#5a402b', roughness:.32, 
 const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#77784f', roughness:.35, metalness:0, clearcoat:.24, clearcoatRoughness:.35 });
 const orangeKeyMat = new THREE.MeshPhysicalMaterial({color:'#d76a2c',roughness:.34,clearcoat:.22,clearcoatRoughness:.34});
 const inkMat = mat('#38281b', .65);
-const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c' });
-const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e' });
-const lensMat = new THREE.MeshPhysicalMaterial({ color:'#ff9b82', roughness:.16, metalness:0, transparent:true, opacity:.16, transmission:.35, thickness:.04, clearcoat:1, clearcoatRoughness:.08, depthWrite:false });
+const ledMat = new THREE.MeshBasicMaterial({ color:'#ff382c',depthTest:false,toneMapped:false });
+const ledOffMat = new THREE.MeshBasicMaterial({ color:'#32100e',depthTest:false,toneMapped:false });
+const lensMat = new THREE.MeshPhysicalMaterial({ color:'#35120f', roughness:.2, metalness:0, transparent:true, opacity:.10, transmission:0, thickness:.01, clearcoat:.7, clearcoatRoughness:.12, depthWrite:false });
 const whiteMat = mat('#e5d3b2', .5);
 function makeWoodTexture(){
  const c=document.createElement('canvas');c.width=1024;c.height=1024;const g=c.getContext('2d');
@@ -102,6 +102,7 @@ roundedBox(2.30,.20,.24,.075,bodyMat,calculator,0,.555,2.07);
 roundedBox(2.30,.16,.19,.06,edgeMat,calculator,0,.525,1.14);
 // Clear, low-opacity lens over the recessed segments catches a subtle highlight.
 roundedBox(2.03,.018,.57,.025,lensMat,calculator,0,.433,1.62);
+// LED segments are rendered on top of the lens for reliable visibility across browsers.
 // LED segments: actual lit segment geometry, driven from calculator value.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
@@ -109,8 +110,8 @@ function makeDigit(x){
  const group=new THREE.Group(); group.position.set(x,.451,1.62); calculator.add(group);
  const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
  for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
-   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),new THREE.MeshBasicMaterial({color:0x32100e}));
-   s.position.set(sx,0,sy); group.add(s); group.userData[name]=s;
+   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.009,sh),new THREE.MeshBasicMaterial({color:0x32100e,depthTest:false,toneMapped:false}));
+   s.position.set(sx,0,sy); s.renderOrder=20; group.add(s); group.userData[name]=s;
  }
  digitGroups.push(group); return group;
 }
@@ -148,7 +149,7 @@ function setLed(text){
   digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
     const ch=chars[i]||' ';
     const on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
-    mesh.material=on?ledMat:ledOffMat;
+    mesh.material=on?ledMat:ledOffMat;mesh.material.depthTest=false;mesh.material.toneMapped=false;mesh.renderOrder=20;
   }));
 }
 // Small printed wordmark and model text on the face.
@@ -157,8 +158,8 @@ function textSprite(text,opts={}){
  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,512,128);ctx.fillStyle=opts.color||'#3c2a1b';
  ctx.font=opts.font||'bold 34px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,64);
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
- const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false});
- const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.3),m);return mesh;
+ const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,depthTest:false,side:THREE.DoubleSide,toneMapped:false});
+ const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.3),m);mesh.renderOrder=30;return mesh;
 }
 // Printed branding lies flat on the front face (+Y), so it remains readable in 3D.
 const tiText=textSprite('TEXAS INSTRUMENTS',{w:1.0,h:.16,font:'bold 21px Arial',color:'#392b1d'});
@@ -174,19 +175,19 @@ const keys=[
  ['0','num:0',5,1],['.','decimal',5,3],['=','equals',5,4]
 ];
 const keyMeshes=[];
-const keyX=[-.93,-.31,.31,.93];
+const keyX=[-.90,-.30,.30,.90];
 keys.forEach(([label,action,row,col])=>{
  const wideZero=label==='0',wideEquals=label==='=';
- const x=wideZero?-.62:keyX[col-1],z=.12-(row-1)*.56;
+ const x=wideZero?-.60:keyX[col-1],z=.05-(row-1)*.52;
  const cap=new THREE.Group();cap.position.set(x,.46,z);calculator.add(cap);
- const width=wideZero ? 1.10 : (wideEquals ? 0.51 : 0.49),depth=wideEquals ? 0.47 : 0.43;
+ const width=wideZero ? 1.06 : (wideEquals ? 0.46 : 0.46),depth=0.42;
  roundedBox(width+.045,.075,depth+.04,.035,edgeMat,cap,0,-.005,0);
  const isFunction=['CE/D','C','÷','×','−','+'].includes(label);
  const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.105,depth,.045,capMaterial,cap,0,.045,0);
  const darkLegend=!isFunction&&!wideEquals;
  const face=textSprite(label,{w:wideZero ? 0.92 : 0.40,h:wideZero ? 0.22 : 0.20,font:label.length>2?'bold 21px Arial':'bold 38px Arial',color:darkLegend?'#33271b':'#fff2d9'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.101,0);cap.add(face);
+ face.rotation.x=-Math.PI/2;face.position.set(0,.112,0);face.renderOrder=40;cap.add(face);
  cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
 });
 const hatchGroup=new THREE.Group();calculator.add(hatchGroup);
