@@ -22,12 +22,11 @@ world.background = null;
 // Orthographic projection keeps proportions stable for reference-style inspection views.
 const viewHeight = 6.4;
 const camera = new THREE.OrthographicCamera(-viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight * sceneEl.clientWidth / sceneEl.clientHeight / 2, viewHeight / 2, -viewHeight / 2, .1, 100);
-// The keypad/branding run along the Z axis: positive Z is the top of the face.
-// View from the opposite Z end so the calculator reads upright (brand, display, keys).
-const initialCamera = new THREE.Vector3(0, 8.2, -7.4);
-camera.position.copy(initialCamera);
-// The face lies in the X/Z plane, so +Z—not world +Y—is the visual 'up' direction.
+// Front-on view: the face normal is +Y and the calculator's top is +Z.
+// Keeping the camera on +Y removes the accidental 180-degree/upside-down projection.
+const initialCamera = new THREE.Vector3(0, 9.5, 0.15);
 camera.up.set(0, 0, 1);
+camera.position.copy(initialCamera);
 camera.lookAt(0, 0, 0);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
@@ -138,9 +137,9 @@ function textSprite(text,opts={}){
  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
 }
-const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'bold 25px Arial'});
+const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
 tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
-const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'bold 23px Arial'});
+const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'900 42px Arial'});
 modelText.rotation.x=-Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
 
 // Recessed keypad panel, with evenly spaced rows and generous margins.
@@ -162,7 +161,7 @@ keys.forEach(([label,action,row,col])=>{
  roundedBox(width+.045,.06,depth+.04,.035,edgeMat,cap,0,.005,0);
  const faceMat=isEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
  const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
- const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 29px Arial':'900 54px Arial',color:'#080604'});
+ const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 82px Arial':'900 150px Arial',color:'#080604'});
  face.rotation.x=-Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
  cap.userData={label,action,homeY:.455};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
 });
