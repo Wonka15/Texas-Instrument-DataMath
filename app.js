@@ -88,7 +88,13 @@ function makeWoodTexture(){
  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
 const woodMat = new THREE.MeshStandardMaterial({color:'#b18a61',map:makeWoodTexture(),roughness:.78});
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat); ground.rotation.x=Math.PI/2; ground.position.y=-.42; ground.receiveShadow=true; world.add(ground);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), woodMat);
+// PlaneGeometry starts in XY with a +Z normal. Rotate it so its visible face points up (+Y).
+ground.rotation.x = -Math.PI / 2;
+// Keep the floor just below the rubber feet so the calculator does not appear to float.
+ground.position.y = -.30;
+ground.receiveShadow = true;
+world.add(ground);
 const calculator = new THREE.Group(); world.add(calculator);
 const pickables=[];
 function roundedBox(w,h,d,r,material,parent,x=0,y=0,z=0){
@@ -145,9 +151,9 @@ function textSprite(text,opts={}){
  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,512,128);
  ctx.fillStyle=opts.color||'#24180f';ctx.font=opts.font||'bold 34px Arial';
  ctx.textAlign='center';ctx.textBaseline='middle';
- // The face is viewed from the back side of these top-facing planes in this coordinate system.
- // Counter-flip the texture on both axes so the printed text reads normally in 3D.
- ctx.save();ctx.translate(512,128);ctx.scale(-1,-1);ctx.fillText(text,256,64);ctx.restore();
+ // These labels sit on planes whose normals point away from the default camera.
+ // Only flip horizontally to compensate for the back-side view; keep glyphs upright.
+ ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(text,256,64);ctx.restore();
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
  const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
  return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
@@ -236,12 +242,12 @@ function press(action,label){
  if(action.startsWith('num:')){
   const n=action.slice(4);current=waiting?n:(current==='0'?n:current==='Error'?n:current+n).slice(0,12);waiting=false;
  }else if(action==='decimal'){
-  if(waiting){current='0.';waiting=false;}else if(!current.includes('.'))current+='.';
+  if(waiting || current==='Error'){current='0.';waiting=false;}else if(!current.includes('.'))current+='.';
  }else if(action==='clear'){current='0';stored=null;operator=null;waiting=false;lastOperand=null;lastOperator=null;}
  else if(action==='ce'){current='0';waiting=false;}
  else if(action==='sign'){if(current!=='0'&&current!=='Error')current=current.startsWith('-')?current.slice(1):'-'+current;}
  else if(action.startsWith('op:')){
-  const next=action.slice(3),value=Number(current);
+  const next=action.slice(3),value=Number(current==='Error'?'0':current);
   if(operator&&!waiting){current=tidy(calculate(stored,value,operator));stored=Number(current);}
   else stored=value;
   operator=next;waiting=true;lastOperator=null;
