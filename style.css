@@ -157,3 +157,22 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
  .datamath-vintage-flicker .led,.datamath-vintage-flicker .display-glow{animation:none}
 }
 @media(max-width:650px){.vr-entry-button{min-height:48px;margin-top:14px}}
+
+/* Dark mode: quiet always-on amber halos, with a clear soft-orange press cue. */
+.datamath-dark-mode button:not(:disabled){
+ box-shadow:0 0 10px #ff7b351c,0 0 2px #ff9b5b25,inset 0 0 0 1px #ffad7210;
+}
+.datamath-dark-mode button:not(:disabled):hover{
+ border-color:#d98b57;
+ box-shadow:0 0 12px #ff80302b,0 0 4px #ffb06a2b,inset 0 0 9px #ff8a3510;
+}
+.datamath-dark-mode button:not(:disabled):active,
+.datamath-dark-mode button:not(:disabled).pressed{
+ border-color:#ffad72!important;
+ box-shadow:0 0 0 1px #ff9a5838,0 0 15px #ff762c4d,inset 0 0 12px #ff762c30!important;
+ filter:brightness(1.06);
+}
+.datamath-dark-mode .key:active,
+.datamath-dark-mode .key.pressed{
+ box-shadow:0 0 0 1px #ff9a5840,0 0 18px #ff762c55,inset 0 0 12px #ff762c30!important;
+}
