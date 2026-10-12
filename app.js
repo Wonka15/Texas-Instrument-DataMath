@@ -289,14 +289,24 @@ const sparkPositions=new Float32Array(sparkCount*3);
 const sparkColors=new Float32Array(sparkCount*3);
 const sparkLife=new Float32Array(sparkCount);
 const sparkSpeed=new Float32Array(sparkCount);
+const sparkVelocityX=new Float32Array(sparkCount);
+const sparkVelocityY=new Float32Array(sparkCount);
+const sparkVelocityZ=new Float32Array(sparkCount);
 const sparkGeometry=new THREE.BufferGeometry();
 function respawnSpark(i,initial=false){
  const k=i*3;
- sparkPositions[k]=(Math.random()-.5)*2.28;
- sparkPositions[k+1]=.49+Math.random()*.045;
- sparkPositions[k+2]=.61+Math.random()*.54;
- sparkLife[i]=initial?Math.random():0;
- sparkSpeed[i]=.12+Math.random()*.34;
+ // Start around the display, then fling each ember outward and slightly toward the viewer.
+ const x=(Math.random()-.5)*1.95;
+ const z=.76+(Math.random()-.5)*.46;
+ sparkPositions[k]=x;
+ sparkPositions[k+1]=.50+Math.random()*.035;
+ sparkPositions[k+2]=z;
+ const side=x===0?(Math.random()<.5?-1:1):Math.sign(x);
+ sparkLife[i]=initial?Math.random()*.8:0;
+ sparkSpeed[i]=.45+Math.random()*.8;
+ sparkVelocityX[i]=side*(.16+Math.random()*.55)+(Math.random()-.5)*.24;
+ sparkVelocityY[i]=.035+Math.random()*.16;
+ sparkVelocityZ[i]=.12+Math.random()*.52;
  sparkColors[k]=1;
  sparkColors[k+1]=.12+Math.random()*.34;
  sparkColors[k+2]=.035+Math.random()*.08;
@@ -442,15 +452,25 @@ function animateLedEffects(timeMs){
  });
  ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?.9:.6))*displaySegmentFactor;
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*pulse*displaySegmentFactor*(futuristic?1.35:1);
- sparkMaterial.opacity=ledStudio.particles==='ambient'?.52:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
+ sparkMaterial.opacity=ledStudio.particles==='ambient'?.88:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
  updateLightingBalance();
 for(let i=0;i<sparkCount;i++){
-  const k=i*3;sparkLife[i]+=sparkSpeed[i]*dt*.42;
-  sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
-  sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
+  const k=i*3;
+  sparkLife[i]+=sparkSpeed[i]*dt*(ledStudio.particles==='ambient'?.78:.42);
+  if(ledStudio.particles==='ambient'){
+   // Warm embers burst sideways and upward instead of merely drifting in a line.
+   sparkPositions[k]+=sparkVelocityX[i]*dt;
+   sparkPositions[k+1]+=sparkVelocityY[i]*dt;
+   sparkPositions[k+2]+=(sparkVelocityZ[i]-sparkLife[i]*.22)*dt;
+  }else{
+   sparkPositions[k+2]+=(.035+sparkSpeed[i]*.12)*dt;
+   sparkPositions[k]+=(Math.sin(t*2+i*1.7))*.0009;
+  }
   const twinkle=.45+.55*Math.abs(Math.sin(t*7.5+i*2.31));
-  sparkColors[k]=twinkle;sparkColors[k+1]=twinkle*(.12+(i%5)*.045);
-  if(sparkLife[i]>1||sparkPositions[k+2]>1.22)respawnSpark(i);
+  sparkColors[k]=ledStudio.particles==='ambient'?1:twinkle;
+  sparkColors[k+1]=ledStudio.particles==='ambient'?.16+twinkle*.28:twinkle*(.12+(i%5)*.045);
+  sparkColors[k+2]=ledStudio.particles==='ambient'?.025+twinkle*.055:.035+Math.random()*.025;
+  if(sparkLife[i]>1||Math.abs(sparkPositions[k])>1.75||sparkPositions[k+2]>1.62||sparkPositions[k+2]<.35)respawnSpark(i);
  }
  sparkGeometry.attributes.position.needsUpdate=true;sparkGeometry.attributes.color.needsUpdate=true;
 }
