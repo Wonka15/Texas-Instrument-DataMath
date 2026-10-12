@@ -110,8 +110,12 @@
   document.querySelectorAll('.reference-card img').forEach((image) => {
     image.addEventListener('error', () => {
       image.classList.add('image-unavailable');
-      image.alt = 'Image could not load. Open the Wikimedia Commons source link below.';
-      image.removeAttribute('src');
+      image.hidden = true;
+      const fallback = document.createElement('div');
+      fallback.className = 'reference-image-fallback';
+      fallback.setAttribute('role', 'status');
+      fallback.textContent = 'Photo unavailable — open the Wikimedia Commons source link.';
+      image.insertAdjacentElement('afterend', fallback);
     }, { once: true });
   });
   </script>
