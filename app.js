@@ -144,6 +144,69 @@ function makeDigit(x){
 // Keep the numeral row aligned toward the right, like the live 2D calculator display.
 // Camera-right runs opposite world X in this front-facing view, so reverse the digit-group order.
 for(let i=0;i<8;i++)makeDigit(.97-i*.26);
+
+// Nixie mode uses warm, stacked numeral glyphs inside individual glass envelopes.
+// The tube assemblies are always built once; the toggle only switches visibility.
+let nixieMode=false;
+const nixieTubes=[];
+const nixieDigitMaterials=[];
+function makeNixieGlyphTexture(){
+ const canvas=document.createElement('canvas');canvas.width=192;canvas.height=240;
+ const ctx=canvas.getContext('2d');
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ // Real Nixie tubes layer several shaped cathodes in one envelope; slight offsets
+ // and varied brightness suggest that depth without obscuring the active numeral.
+ for(let digit=0;digit<=9;digit++){
+  ctx.save();
+  ctx.font='500 150px Georgia, serif';
+  ctx.shadowColor='#ff6b27';ctx.shadowBlur=digit===8?5:10;
+  ctx.fillStyle=digit===8?'rgba(255,143,72,.22)':'rgba(255,112,43,.34)';
+  ctx.fillText(String(digit),96+(digit%3-1)*1.8,120+(digit%4-1.5)*1.1);
+  ctx.restore();
+ }
+ const texture=new THREE.CanvasTexture(canvas);
+ texture.colorSpace=THREE.SRGBColorSpace;
+ return texture;
+}
+const nixieGlyphTexture=makeNixieGlyphTexture();
+for(let i=0;i<8;i++){
+ const tube=new THREE.Group();
+ tube.position.set(.97-i*.26,.0,.88);
+ calculator.add(tube);
+ const glass=new THREE.Mesh(
+  new THREE.CylinderGeometry(.108,.108,.12,32,1,true),
+  new THREE.MeshPhysicalMaterial({color:'#f3b17a',transparent:true,opacity:.16,roughness:.08,metalness:.05,clearcoat:1,clearcoatRoughness:.08,side:THREE.DoubleSide,depthWrite:false})
+ );
+ glass.position.set(0,.535,0);glass.renderOrder=24;tube.add(glass);
+ const topRing=new THREE.Mesh(new THREE.TorusGeometry(.104,.009,8,32),new THREE.MeshStandardMaterial({color:'#b77a4b',metalness:.48,roughness:.28}));
+ topRing.rotation.x=Math.PI/2;topRing.position.set(0,.598,0);topRing.renderOrder=25;tube.add(topRing);
+ const baseRing=topRing.clone();baseRing.position.y=.475;tube.add(baseRing);
+ const glyphMaterial=new THREE.MeshBasicMaterial({map:nixieGlyphTexture,color:'#ff9b54',transparent:true,opacity:.9,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.175,.225),glyphMaterial);
+ glyph.rotation.x=Math.PI/2;glyph.position.set(0,.603,0);glyph.renderOrder=27;tube.add(glyph);
+ tube.visible=false;
+ nixieTubes.push(tube);nixieDigitMaterials.push(glyphMaterial);
+}
+function setNixieDigits(chars,dotSlot){
+ nixieTubes.forEach((tube,i)=>{
+  const active=chars[i]||' ';
+  tube.visible=nixieMode&&active!==' ';
+  const glyph=tube.children.find(child=>child.isMesh&&child.geometry.type==='PlaneGeometry');
+  if(!glyph)return;
+  const material=glyph.material;
+  material.color.set(active===' '? '#ff9b54' : '#ff9b54');
+  material.opacity=active===' '?0:.95;
+  // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
+  let dot=tube.userData.decimalDot;
+  if(!dot){
+   dot=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),new THREE.MeshBasicMaterial({color:'#ff7b37',toneMapped:false}));
+   dot.position.set(-.065,.606,-.105);dot.renderOrder=28;tube.add(dot);tube.userData.decimalDot=dot;
+  }
+  dot.visible=nixieMode&&i===dotSlot&&active!==' ';
+ });
+}
+
 // Soft, additive ruby-red halo behind the seven-segment display.
 function makeLedGlowTexture(){
  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=128;
@@ -255,6 +318,10 @@ function applyLedStudio(){
  // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b);
  ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
+ ledGlow.visible=!nixieMode;
+ displayBloomLayers.forEach(layer=>{layer.visible=!nixieMode;});
+ nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
+ ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
  ledGlow.material.opacity=futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.96:.88;
  ledLight.color.set(futuristic?0xff5637:0xff1b0b);
@@ -297,6 +364,9 @@ function animateLedEffects(timeMs){
  const futuristic=ledStudio.style==='futuristic';
  const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(b*pulse);
+ if(nixieMode){
+  nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.58+b*.5+(ledStudio.flicker==='vintage'?(pulse<.8?.12:0):0));});
+ }
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*b*pulse+ledPulse*.15);
  displayBloomLayers.forEach((layer,i)=>{
   const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25;
@@ -320,6 +390,7 @@ function wireLedStudio(){
  const brightnessValue=document.querySelector('#ledBrightnessValue'),particles=document.querySelector('#ledParticles');
  const flicker=document.querySelector('#ledFlicker'),reflections=document.querySelector('#ledReflections');
  const darkToggle=document.querySelector('#darkModeToggle');
+ const nixieToggle=document.querySelector('#nixieToggle');
  if(!style||!brightness||!brightnessValue||!particles||!flicker||!reflections||!darkToggle)return;
  style.value=ledStudio.style;brightness.value=String(ledStudio.brightness);
  particles.value=ledStudio.particles;flicker.value=ledStudio.flicker;reflections.checked=ledStudio.reflections;
@@ -331,6 +402,25 @@ function wireLedStudio(){
  document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');
  reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
  darkToggle.addEventListener('click',()=>setDarkMode(!darkMode));
+ if(nixieToggle){
+  nixieToggle.setAttribute('aria-pressed',String(nixieMode));
+  nixieToggle.textContent=nixieMode?'◉ NIXIE TUBE ON':'◉ NIXIE TUBE';
+  nixieToggle.addEventListener('click',()=>{
+   nixieMode=!nixieMode;
+   nixieToggle.setAttribute('aria-pressed',String(nixieMode));
+   nixieToggle.textContent=nixieMode?'◉ NIXIE TUBE ON':'◉ NIXIE TUBE';
+   const heading=document.querySelector('#ledStudioTitle');
+   if(heading)heading.textContent=nixieMode?'Nixie Tube Studio':'LED Studio';
+   const caption=document.querySelector('.display-caption');
+   if(caption)caption.textContent=nixieMode?'NIXIE TUBE DISPLAY':'LED DISPLAY';
+   const spec=document.querySelector('.spec-list div strong');
+   // Keep the object notes accurate while the alternate display is active.
+   const displaySpec=document.querySelector('.spec-list div strong');
+   if(displaySpec)displaySpec.textContent=nixieMode?'Nixie tube-style digits':'Red LED-style digits';
+   setLed(document.querySelector('#display')?.textContent||'0');
+   applyLedStudio();
+  });
+ }
  applyLedStudio();
 }
 function setLed(text){
@@ -339,10 +429,19 @@ function setLed(text){
  displaySegmentFactor=.68+.32*(litSegments/56);
  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
  const dotSlot=decimalDigits>0?8-clean.length+decimalDigits-1:-1;
- digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
-  const ch=chars[i]||' ',on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
-  mesh.material=on?ledMat:ledOffMat;
- }));
+ digitGroups.forEach((g,i)=>{
+  g.visible=!nixieMode;
+  Object.entries(g.userData).forEach(([name,mesh])=>{
+   const ch=chars[i]||' ',on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
+   mesh.material=on?ledMat:ledOffMat;
+  });
+ });
+ nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
+ setNixieDigits(chars,dotSlot);
+ ledGlow.visible=!nixieMode;
+ displayBloomLayers.forEach(layer=>{layer.visible=!nixieMode;});
+ ledLight.visible=ledStudio.reflections&&!nixieMode;
+ ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
 }
 
 // Branding printed above the display, oriented to read correctly from above.
