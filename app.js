@@ -89,86 +89,61 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,segments),material);
   mesh.position.set(x,y,z); mesh.castShadow=true; parent.add(mesh); return mesh;
 }
-// TI-2500-inspired shell: the working face points toward +Y.
-roundedBox(3.30,.54,3.95,.18,edgeMat,calculator,0,0,0);
-roundedBox(3.20,.42,3.85,.16,bodyMat,calculator,0,.20,0);
-// Inset dark keyboard surround.
-roundedBox(2.72,.065,2.35,.09,darkMat,calculator,0,.435,-.66);
-// Deep hooded LED well. The dark floor is recessed under the shell surface.
-roundedBox(2.82,.105,1.12,.07,edgeMat,calculator,0,.405,.91);
-roundedBox(2.62,.018,.79,.035,mat('#160d0a',.22),calculator,0,.414,.91);
-// Sculpted side cheeks, thick brow and front lip make a molded hood with a deep shadow line.
-roundedBox(.20,.23,1.12,.075,bodyMat,calculator,-1.27,.49,.91);
-roundedBox(.20,.23,1.12,.075,bodyMat,calculator,1.27,.49,.91);
-roundedBox(2.60,.20,.24,.075,bodyMat,calculator,0,.555,1.36);
-roundedBox(2.60,.16,.19,.06,edgeMat,calculator,0,.525,.43);
-// Clear, low-opacity lens over the recessed segments catches a subtle highlight.
-roundedBox(2.48,.018,.57,.025,lensMat,calculator,0,.433,.91);
-// LED segments are rendered on top of the lens for reliable visibility across browsers.
-// LED segments: actual lit segment geometry, driven from calculator value.
+// Rebuilt TI-2500-inspired model from a clean, consistent coordinate layout.
+// Face points upward (+Y); the calculator's top is +Z, so the order is:
+// wordmark -> red LED window -> keypad. All face parts share the same surface plane.
+roundedBox(3.28,.48,4.02,.19,edgeMat,calculator,0,0,0);
+roundedBox(3.17,.38,3.91,.16,bodyMat,calculator,0,.19,0);
+
+// Thin raised bezel surrounding the LED window.
+roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
+roundedBox(2.48,.022,.61,.035,mat('#160a08',.24),calculator,0,.449,.88);
+roundedBox(2.54,.09,.12,.04,bodyMat,calculator,0,.445,1.20);
+roundedBox(.12,.09,.68,.04,bodyMat,calculator,-1.22,.445,.88);
+roundedBox(.12,.09,.68,.04,bodyMat,calculator,1.22,.445,.88);
+
+// Seven-segment LED digits. Segments are attached just above the display lens.
 const segments={0:['a','b','c','d','e','f'],1:['b','c'],2:['a','b','g','e','d'],3:['a','b','g','c','d'],4:['f','g','b','c'],5:['a','f','g','c','d'],6:['a','f','g','e','c','d'],7:['a','b','c'],8:['a','b','c','d','e','f','g'],9:['a','b','c','d','f','g'],'-':['g'],E:['a','f','g','e','d'],e:['a','b','g','e','d'],r:['g','e'],o:['g','e','c','d']};
 const digitGroups=[];
+const ledMat=new THREE.MeshBasicMaterial({color:'#ff382c',depthTest:false,toneMapped:false});
+const ledOffMat=new THREE.MeshBasicMaterial({color:'#32100e',depthTest:false,toneMapped:false});
 function makeDigit(x){
- const group=new THREE.Group(); group.position.set(x,.451,.91); calculator.add(group);
- const specs={a:[0,.15,.17,.035],g:[0,0,.17,.035],d:[0,-.15,.17,.035],f:[-.09,.075,.035,.12],b:[.09,.075,.035,.12],e:[-.09,-.075,.035,.12],c:[.09,-.075,.035,.12],dot:[.105,-.16,.025,.025]};
- for(const [name,[sx,sy,sw,sh]] of Object.entries(specs)){
-   const s=new THREE.Mesh(new THREE.BoxGeometry(sw,.009,sh),new THREE.MeshBasicMaterial({color:0x32100e,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
-   s.position.set(sx,0,sy); s.renderOrder=50; group.add(s); group.userData[name]=s;
+ const group=new THREE.Group();group.position.set(x,.467,.88);calculator.add(group);
+ const specs={a:[0,.12,.145,.026],g:[0,0,.145,.026],d:[0,-.12,.145,.026],f:[-.075,.06,.026,.095],b:[.075,.06,.026,.095],e:[-.075,-.06,.026,.095],c:[.075,-.06,.026,.095],dot:[.095,-.13,.022,.022]};
+ for(const [name,[sx,sz,sw,sh]] of Object.entries(specs)){
+   const mesh=new THREE.Mesh(new THREE.BoxGeometry(sw,.008,sh),ledOffMat);
+   mesh.position.set(sx,0,sz);mesh.renderOrder=20;group.add(mesh);group.userData[name]=mesh;
  }
- digitGroups.push(group); return group;
+ digitGroups.push(group);
 }
-for(let i=0;i<8;i++)makeDigit(-.98+i*.28);
-// A small red scatter suggests light refracting through the lens, with no expensive post-processing.
-const ledDustCount=22;
-const ledDustGeometry=new THREE.BufferGeometry();
-const ledDustPositions=new Float32Array(ledDustCount*3);
-const ledDustPhases=new Float32Array(ledDustCount);
-for(let i=0;i<ledDustCount;i++){
-  ledDustPositions[i*3]=(Math.random()-.5)*1.95;
-  ledDustPositions[i*3+1]=.458+Math.random()*.025;
-  ledDustPositions[i*3+2]=.91+(Math.random()-.5)*.53;
-  ledDustPhases[i]=Math.random()*Math.PI*2;
-}
-ledDustGeometry.setAttribute('position',new THREE.BufferAttribute(ledDustPositions,3));
-const ledDust=new THREE.Points(ledDustGeometry,new THREE.PointsMaterial({color:0xff5946,size:.018,transparent:true,opacity:.38,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));
-calculator.add(ledDust);
-// A tiny generated sprite gives the LED area a soft halo without a costly bloom pass.
-const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
-const glowCtx=glowCanvas.getContext('2d');
-const glowGradient=glowCtx.createRadialGradient(32,32,1,32,32,31);
-glowGradient.addColorStop(0,'rgba(255,48,30,.38)');glowGradient.addColorStop(.35,'rgba(255,40,25,.12)');glowGradient.addColorStop(1,'rgba(255,30,20,0)');
-glowCtx.fillStyle=glowGradient;glowCtx.fillRect(0,0,64,64);
-const glowTexture=new THREE.CanvasTexture(glowCanvas);
-const ledGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xff4b32,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false}));
-ledGlow.position.set(0,.465,.91);ledGlow.scale.set(2.45,.63,1);calculator.add(ledGlow);
+for(let i=0;i<8;i++)makeDigit(-.91+i*.26);
 function setLed(text){
-  // Right-align digits and attach each decimal point to the preceding digit.
-  const raw=String(text).slice(0,16);
-  const clean=raw.replace(/\./g,'').slice(-8);
-  const chars=clean.padStart(8,' ');
-  const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
-  const dotSlot=decimalDigits>0?8-clean.length+decimalDigits-1:-1;
-  digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
-    const ch=chars[i]||' ';
-    const on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
-    mesh.material=on?ledMat:ledOffMat;mesh.material.depthTest=false;mesh.material.depthWrite=false;mesh.material.transparent=true;mesh.material.toneMapped=false;mesh.renderOrder=50;
-  }));
+ const raw=String(text).slice(0,16),clean=raw.replace(/\./g,'').slice(-8),chars=clean.padStart(8,' ');
+ const decimalDigits=raw.includes('.')?raw.slice(0,raw.indexOf('.')).replace(/\./g,'').length:-1;
+ const dotSlot=decimalDigits>0?8-clean.length+decimalDigits-1:-1;
+ digitGroups.forEach((g,i)=>Object.entries(g.userData).forEach(([name,mesh])=>{
+  const ch=chars[i]||' ',on=name==='dot'?i===dotSlot:(segments[ch]||[]).includes(name);
+  mesh.material=on?ledMat:ledOffMat;
+ }));
 }
-// Small printed wordmark and model text on the face.
+
+// Branding printed above the display, oriented to read correctly from above.
 function textSprite(text,opts={}){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=128;
- const ctx=canvas.getContext('2d');ctx.clearRect(0,0,512,128);ctx.fillStyle=opts.color||'#3c2a1b';
- ctx.font=opts.font||'bold 34px Georgia';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,64);
+ const ctx=canvas.getContext('2d');ctx.clearRect(0,0,512,128);
+ ctx.fillStyle=opts.color||'#24180f';ctx.font=opts.font||'bold 34px Arial';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,64);
  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;
- const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,depthTest:false,side:THREE.DoubleSide,toneMapped:false});
- const mesh=new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.3),m);mesh.renderOrder=30;return mesh;
+ const material=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false});
+ return new THREE.Mesh(new THREE.PlaneGeometry(opts.w||1.4,opts.h||.25),material);
 }
-// Printed branding lies flat on the front face (+Y), so it remains readable in 3D.
-const tiText=textSprite('Texas Instruments',{w:1.25,h:.17,font:'bold 23px Arial',color:'#392b1d'});
-tiText.rotation.x=-Math.PI/2;tiText.position.set(-.53,.424,1.72);calculator.add(tiText);
-const modelText=textSprite('DATAMATH',{w:.78,h:.15,font:'bold 23px Arial',color:'#392b1d'});
-modelText.rotation.x=-Math.PI/2;modelText.position.set(.94,.424,1.72);calculator.add(modelText);
-// Eighteen keys in a TI-2500-style 4-column layout. Equals is orange at bottom-right.
+const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'bold 25px Arial'});
+tiText.rotation.x=-Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
+const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'bold 23px Arial'});
+modelText.rotation.x=-Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
+
+// Recessed keypad panel, with evenly spaced rows and generous margins.
+roundedBox(2.76,.065,2.42,.085,darkMat,calculator,0,.405,-.67);
 const keys=[
  ['CE/D','ce',1,1],['÷','op:/',1,2],['×','op:*',1,3],['C','clear',1,4],
  ['7','num:7',2,1],['8','num:8',2,2],['9','num:9',2,3],['−','op:-',2,4],
@@ -176,41 +151,41 @@ const keys=[
  ['1','num:1',4,1],['2','num:2',4,2],['3','num:3',4,3],
  ['0','num:0',5,1],['.','decimal',5,3],['=','equals',5,4]
 ];
-const keyMeshes=[];
-const keyX=[-.90,-.30,.30,.90];
+const keyMeshes=[],pickables=[];
+const keyX=[-.91,-.305,.305,.91];
 keys.forEach(([label,action,row,col])=>{
- const wideZero=label==='0',wideEquals=label==='=';
- const x=wideZero?-.60:keyX[col-1],z=.15-(row-1)*.45;
- const cap=new THREE.Group();cap.position.set(x,.46,z);calculator.add(cap);
- const width=wideZero ? 1.06 : (wideEquals ? 0.46 : 0.46),depth=0.37;
- roundedBox(width+.045,.075,depth+.04,.035,edgeMat,cap,0,-.005,0);
- const isFunction=['CE/D','C','÷','×','−','+'].includes(label);
- const capMaterial=wideEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
- const top=roundedBox(width,.105,depth,.045,capMaterial,cap,0,.045,0);
- const darkLegend=!isFunction&&!wideEquals;
- const face=textSprite(label,{w:wideZero ? 0.98 : 0.43,h:wideZero ? 0.25 : 0.25,font:label.length>2?'900 30px Arial':'900 58px Arial',color:'#080604'});
- face.rotation.x=-Math.PI/2;face.position.set(0,.114,0);face.renderOrder=60;cap.add(face);
- cap.userData={label,action,homeY:.46};pickables.push(top);top.userData.key=cap;keyMeshes.push(cap);
+ const isZero=label==='0',isEquals=label==='=',isFunction=['CE/D','C','÷','×','−','+'].includes(label);
+ const x=isZero?-.605:keyX[col-1],z=.20-(row-1)*.455;
+ const cap=new THREE.Group();cap.position.set(x,.455,z);calculator.add(cap);
+ const width=isZero?1.08:.47,depth=.375;
+ roundedBox(width+.045,.06,depth+.04,.035,edgeMat,cap,0,.005,0);
+ const faceMat=isEquals?orangeKeyMat:isFunction?keyTopMat:whiteMat;
+ const top=roundedBox(width,.095,depth,.045,faceMat,cap,0,.045,0);
+ const face=textSprite(label,{w:isZero ? .98 : .43,h:.23,font:label.length>2?'900 29px Arial':'900 54px Arial',color:'#080604'});
+ face.rotation.x=-Math.PI/2;face.position.set(0,.096,0);face.renderOrder=30;cap.add(face);
+ cap.userData={label,action,homeY:.455};top.userData.key=cap;pickables.push(top);keyMeshes.push(cap);
 });
-const hatchGroup=new THREE.Group();calculator.add(hatchGroup);
-roundedBox(1.55,.04,1.3,.03,darkMat,hatchGroup,0,-.245,-1.15);
+
+// Battery cover and rear details are kept below the face and do not intrude into the keypad.
+roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);
+const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
+hatch.visible=false;hatch.userData.hatch=true;
+const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial'});
+hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=-Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
+const batteryGroup=new THREE.Group();calculator.add(batteryGroup);
 for(let i=0;i<2;i++){
- const battery=cylinder(.18,.9,mat(i?'#c8c9bd':'#d5c7a4',.32,.2),hatchGroup,i?.36:-.36,-.14,-1.45,32);
+ const battery=cylinder(.16,.78,mat(i?'#c8c9bd':'#d5c7a4',.32,.2),batteryGroup,i?.35:-.35,-.16,-1.20,28);
  battery.rotation.z=Math.PI/2;
- const end=cylinder(.185,.035,mat('#b6b6a7',.25,.3),hatchGroup,i?.82:-.82,-.14,-1.45,32);end.rotation.z=Math.PI/2;
 }
-const hatch=roundedBox(1.8,.08,1.55,.03,bodyMat,calculator,0,-.13,-1.15);
-hatch.visible=false; hatch.userData.hatch=true;
-const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 19px Arial'});hatchLabel.position.set(0,-.085,-1.15);hatchLabel.rotation.x=-Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
-let hatchOpen=false;
-function toggleHatch(){hatchOpen=!hatchOpen;hatch.visible=!hatchOpen;hatchLabel.visible=hatchOpen;hatch.position.y=hatchOpen?-.55:-.13;loadState.textContent=hatchOpen?'BATTERY BAY OPEN':'MODEL READY';}
-document.querySelector('#batteryButton').addEventListener('click',toggleHatch);
-// Back details are modeled as part of the same object and become visible when turned over.
-const backDetails=new THREE.Group();calculator.add(backDetails);
-roundedBox(1.6,.04,1.35,.04,edgeMat,backDetails,0,-.235,-1.15);
-for(let i=0;i<4;i++)cylinder(.055,.025,darkMat,backDetails,i%2?1.25:-1.25,-.235,i<2?1.55:-1.55,16);
 const feetMat=mat('#59432f');
-for(const x of [-1.15,1.15])for(const z of [-1.48,1.48])roundedBox(.38,.08,.3,.02,feetMat,calculator,x,-.25,z);
+for(const x of [-1.18,1.18])for(const z of [-1.58,1.58])roundedBox(.34,.075,.26,.025,feetMat,calculator,x,-.25,z);
+let hatchOpen=false;
+function toggleHatch(){
+ hatchOpen=!hatchOpen;hatch.visible=!hatchOpen;hatchLabel.visible=hatchOpen;batteryGroup.visible=hatchOpen;
+ hatch.position.y=hatchOpen?-.32:-.205;
+ loadState.textContent=hatchOpen?'BATTERY BAY OPEN':'MODEL READY';
+}
+document.querySelector('#batteryButton').addEventListener('click',toggleHatch);
 
 let soundEnabled=true,audioCtx=null;
 function clickSound(freq=780,duration=.055){
