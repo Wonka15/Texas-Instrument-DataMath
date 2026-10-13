@@ -206,12 +206,13 @@ roundedBox(2.98,.075,.14,.035,bodyMat,calculator,0,-.36,-2.00);
 const jackMetalMat = new THREE.MeshStandardMaterial({color:'#aaa9a1',metalness:.78,roughness:.28});
 const jackSocket = new THREE.Group();
 jackSocket.position.set(0,-.125,1.55);
-jackSocket.rotation.x=Math.PI/2;
 calculator.add(jackSocket);
 const jackRing = new THREE.Mesh(new THREE.TorusGeometry(.155,.032,10,32),jackMetalMat);
-jackRing.position.z=.012; jackRing.renderOrder=6; jackSocket.add(jackRing);
-const jackOpening = cylinder(.125,.065,frontInsertMat,jackSocket,0,0,0,32);
-const jackInner = cylinder(.035,.068,jackMetalMat,jackSocket,0,0,-.025,20);
+jackRing.rotation.x=Math.PI/2;
+jackRing.position.y=-.012; jackRing.renderOrder=6; jackSocket.add(jackRing);
+// Cylinders retain their Y-axis, so the jack barrel is normal to the rear face.
+const jackOpening = cylinder(.125,.065,frontInsertMat,jackSocket,0,-.022,0,32);
+const jackInner = cylinder(.035,.068,jackMetalMat,jackSocket,0,-.057,0,20);
 
 // A small power slider on the display-side edge, inspired by the original hardware.
 roundedBox(.06,.12,.34,.025,seamMat,calculator,1.735,.00,1.08);
