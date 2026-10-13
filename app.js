@@ -558,6 +558,7 @@ function triggerLedActivity(action){
  }
 }
 function animateLedEffects(timeMs){
+ animateDatamathLogoSpectrum(timeMs);
  const t=timeMs*.001,dt=lastLedFrame?Math.min(.05,Math.max(0,(timeMs-lastLedFrame)*.001)):1/60;
  lastLedFrame=timeMs;
  const vintage=ledStudio.flicker==='vintage';
@@ -694,8 +695,45 @@ function textSprite(text,opts={}){
 }
 const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
 tiText.rotation.x=Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
-const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'900 42px Arial'});
-modelText.rotation.x=Math.PI/2;modelText.position.set(.91,.435,1.61);calculator.add(modelText);
+const modelText=textSprite('DATAMATH',{w:1.02,h:.20,font:'900 54px Arial'});
+modelText.rotation.x=Math.PI/2;modelText.position.set(.77,.435,1.61);calculator.add(modelText);
+
+// In Dark Mode, let the Datamath wordmark breathe through a slow, restrained
+// spectrum glow. Canvas updates are throttled to avoid unnecessary GPU uploads.
+let lastLogoSpectrumFrame=0;
+function animateDatamathLogoSpectrum(timeMs){
+ if(!modelText?.userData?.labelCanvas||!modelText.material?.map)return;
+ if(!darkMode){lastLogoSpectrumFrame=0;return;}
+ if(timeMs-lastLogoSpectrumFrame<50)return;
+ lastLogoSpectrumFrame=timeMs;
+ const canvas=modelText.userData.labelCanvas,ctx=canvas.getContext('2d');
+ const phase=(timeMs*.000035)%1;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.font='900 54px Arial';
+ const gradient=ctx.createLinearGradient(64,64,448,64);
+ const spectrum=['#ff6a35','#ffc857','#ff4d9d','#b16cff','#54dfff','#ff6a35'];
+ spectrum.forEach((color,i)=>{
+  const stop=((i/(spectrum.length-1)+phase)%1);
+  gradient.addColorStop(stop,color);
+ });
+ ctx.save();
+ ctx.shadowColor='#ff7a35';
+ ctx.shadowBlur=18;
+ ctx.fillStyle=gradient;
+ ctx.globalAlpha=.95;
+ ctx.translate(512,0);ctx.scale(-1,1);
+ ctx.fillText('DATAMATH',256,64);
+ ctx.restore();
+ // A second crisp pass keeps the larger wordmark readable through the halo.
+ ctx.save();
+ ctx.translate(512,0);ctx.scale(-1,1);
+ ctx.fillStyle=gradient;
+ ctx.globalAlpha=.92;
+ ctx.fillText('DATAMATH',256,64);
+ ctx.restore();
+ modelText.material.map.needsUpdate=true;
+}
 
 // Keycaps are seated directly over the continuous black front insert.
 const keys=[
