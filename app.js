@@ -433,7 +433,7 @@ const sparkMaterial=new THREE.PointsMaterial({
 const ledSparks=new THREE.Points(sparkGeometry,sparkMaterial);
 ledSparks.frustumCulled=false;ledSparks.renderOrder=22;calculator.add(ledSparks);
 // LED Studio preset and live controls.
-const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'subtle',reflections:true};
+const ledStudio={style:'cinematic',brightness:78,particles:'reactive',flicker:'subtle',reflections:true,phosphor:true};
 let displaySegmentFactor=1,darkMode=false,ledPulse=0,lastLedFrame=0;
 // Keep the rear light in the same lighting presets so Dark Mode still works.
 const environmentLights=[
@@ -525,18 +525,18 @@ function applyLedStudio(){
  // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive());
  ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
- ledGlow.visible=!nixieMode;
- displayBloomLayers.forEach(layer=>{layer.visible=!nixieMode;});
+ ledGlow.visible=ledStudio.phosphor&&!nixieMode;
+ displayBloomLayers.forEach(layer=>{layer.visible=ledStudio.phosphor&&!nixieMode;});
  nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
  ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
- ledGlow.material.opacity=(futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.48:.88)*effectiveDisplayDrive();
+ ledGlow.material.opacity=(ledStudio.phosphor? (futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.48:.88):0)*effectiveDisplayDrive();
  ledLight.color.set(futuristic?0xff5637:0xff1b0b);
- ledLight.intensity=(darkMode?3.2:1.75)*effectiveDisplayDrive()*(ledStudio.style==='cinematic'?1.0:futuristic?1.75:1)*displaySegmentFactor;
+ ledLight.intensity=(darkMode?3.2:1.75)*effectiveDisplayDrive()*(ledStudio.style==='cinematic'?1.0:futuristic?1.75:1)*displaySegmentFactor*(ledStudio.phosphor?1:0);
  // Layered bloom spreads the phosphor haze across the entire display window.
  displayBloomLayers.forEach((layer,i)=>{
   layer.material.color.set(futuristic?0xff5037:0xff2015);
-  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.09:.25)*effectiveDisplayDrive()*(i===2?.9:1);
+  layer.material.opacity=(ledStudio.phosphor?(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.09:.25):0)*effectiveDisplayDrive()*(i===2?.9:1);
   layer.scale.set((1.25+i*.18)*styleScale,(.48+i*.08)*styleScale,1);
  });
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
@@ -580,12 +580,12 @@ function animateLedEffects(timeMs){
    material.opacity=Math.max(.08,Math.min(1,baseNixieOpacity*pulse+ledPulse*.06));
   });
  }
- ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
+ ledGlow.material.opacity=ledStudio.phosphor?Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08):0;
  displayBloomLayers.forEach((layer,i)=>{
   const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.09:.25;
-  layer.material.opacity=profile*effectiveDisplayDrive()*pulse*(i===2?.9:1)+ledPulse*.02;
+  layer.material.opacity=ledStudio.phosphor?(profile*effectiveDisplayDrive()*pulse*(i===2?.9:1)+ledPulse*.02):0;
  });
- ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:ledStudio.style==='cinematic'?.58:1)+ledPulse*(darkMode?.9:.6)*(ledStudio.style==='cinematic'?.58:1))*displaySegmentFactor;
+ ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:ledStudio.style==='cinematic'?.58:1)+ledPulse*(darkMode?.9:.6)*(ledStudio.style==='cinematic'?.58:1))*displaySegmentFactor*(ledStudio.phosphor?1:0);
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*pulse*displaySegmentFactor*(futuristic?1.35:1);
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.88:ledStudio.particles==='reactive'?.16+ledPulse*.55:0;
  updateLightingBalance();
@@ -615,9 +615,11 @@ function wireLedStudio(){
  const flicker=document.querySelector('#ledFlicker'),reflections=document.querySelector('#ledReflections');
  const darkToggle=document.querySelector('#darkModeToggle');
  const nixieToggle=document.querySelector('#nixieToggle');
+ const phosphorToggle=document.querySelector('#phosphorToggle');
  if(!style||!brightness||!brightnessValue||!particles||!flicker||!reflections||!darkToggle)return;
  style.value=ledStudio.style;brightness.value=String(ledStudio.brightness);
  particles.value=ledStudio.particles;flicker.value=ledStudio.flicker;reflections.checked=ledStudio.reflections;
+ if(phosphorToggle){phosphorToggle.setAttribute('aria-pressed',String(ledStudio.phosphor));phosphorToggle.textContent=ledStudio.phosphor?'✦ PHOSPHOR GLOW ON':'✧ PHOSPHOR GLOW OFF';}
  brightnessValue.textContent=ledStudio.brightness+'%';
  style.addEventListener('change',()=>{ledStudio.style=style.value;applyLedStudio();});
  brightness.addEventListener('input',()=>{
@@ -631,6 +633,7 @@ function wireLedStudio(){
  flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');applyLedStudio();});
  document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');
  reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
+ if(phosphorToggle){phosphorToggle.addEventListener('click',()=>{ledStudio.phosphor=!ledStudio.phosphor;phosphorToggle.setAttribute('aria-pressed',String(ledStudio.phosphor));phosphorToggle.textContent=ledStudio.phosphor?'✦ PHOSPHOR GLOW ON':'✧ PHOSPHOR GLOW OFF';applyLedStudio();});}
  darkToggle.addEventListener('click',()=>setDarkMode(!darkMode));
  if(nixieToggle){
   nixieToggle.setAttribute('aria-pressed',String(nixieMode));
@@ -668,8 +671,8 @@ function setLed(text){
  });
  nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
  setNixieDigits(chars,dotSlot);
- ledGlow.visible=!nixieMode;
- displayBloomLayers.forEach(layer=>{layer.visible=!nixieMode;});
+ ledGlow.visible=ledStudio.phosphor&&!nixieMode;
+ displayBloomLayers.forEach(layer=>{layer.visible=ledStudio.phosphor&&!nixieMode;});
  ledLight.visible=ledStudio.reflections&&!nixieMode;
  ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
 }
