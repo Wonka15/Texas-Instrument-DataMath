@@ -173,11 +173,16 @@ function wedgeShell(width, depth, frontY, backTopY, backBottomY, material, paren
   parent.add(mesh);
   return mesh;
 }
-// The darker outer seam peeks around the lighter face shell, like a real case joint.
-wedgeShell(3.28, 4.02, .27, .015, -.29, edgeMat, calculator);
-wedgeShell(3.12, 3.86, .385, .055, -.185, bodyMat, calculator);
-// A fine lower-edge lip catches warm light and makes the case thickness legible in orbit.
-roundedBox(2.94, .055, .10, .025, edgeMat, calculator, 0, -.19, -1.91);
+// Stronger, deliberately visible two-piece wedge casing.
+// The outer shell is wider than the face shell, exposing a substantial molded
+// shoulder around the front and a deep sloped underside when viewed in orbit.
+wedgeShell(3.46, 4.20, .255, -.055, -.52, edgeMat, calculator);
+wedgeShell(3.12, 3.86, .405, -.015, -.37, bodyMat, calculator);
+// Raised perimeter seam: this small contrasting bevel makes the casing outline
+// visible even from a front three-quarter view without moving the display or keys.
+wedgeShell(3.28, 4.02, .335, -.035, -.43, darkMat, calculator);
+// Warm lower lip follows the deeper keypad-end profile.
+roundedBox(2.98, .065, .12, .025, edgeMat, calculator, 0, -.385, -1.99);
 
 // Thin raised bezel surrounding the LED window.
 roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
