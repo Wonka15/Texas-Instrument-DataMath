@@ -173,14 +173,16 @@ function wedgeShell(width, depth, frontY, backTopY, backBottomY, material, paren
   parent.add(mesh);
   return mesh;
 }
-// Stronger, deliberately visible two-piece wedge casing.
-// The outer shell is wider than the face shell, exposing a substantial molded
-// shoulder around the front and a deep sloped underside when viewed in orbit.
+// One continuous outer wedge gives the calculator a readable side profile.
+// A separate raised face plate creates the molded shoulder without stacking
+// multiple complete wedge solids on top of one another.
 wedgeShell(3.46, 4.20, .255, -.055, -.52, edgeMat, calculator);
-wedgeShell(3.12, 3.86, .405, -.015, -.37, bodyMat, calculator);
-// Raised perimeter seam: this small contrasting bevel makes the casing outline
-// visible even from a front three-quarter view without moving the display or keys.
-wedgeShell(3.28, 4.02, .335, -.035, -.43, darkMat, calculator);
+roundedBox(3.12, .105, 3.86, .12, bodyMat, calculator, 0, .305, 0);
+// A thin, inset-looking perimeter seam follows the face plate's four edges.
+roundedBox(3.16, .018, .045, .012, darkMat, calculator, 0, .365, 1.905);
+roundedBox(3.16, .018, .045, .012, darkMat, calculator, 0, .365, -1.905);
+roundedBox(.045, .018, 3.80, .012, darkMat, calculator, -1.555, .365, 0);
+roundedBox(.045, .018, 3.80, .012, darkMat, calculator, 1.555, .365, 0);
 // Warm lower lip follows the deeper keypad-end profile.
 roundedBox(2.98, .065, .12, .025, edgeMat, calculator, 0, -.385, -1.99);
 
@@ -484,7 +486,7 @@ function applyLedStudio(){
  });
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
  tableReflection.visible=ledStudio.reflections;ledLight.visible=ledStudio.reflections;
- ledSparks.visible=ledStudio.particles!=='off';
+ ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  sparkMaterial.size=ledStudio.particles==='ambient'?.066:futuristic?.06:.032;
  sparkMaterial.opacity=ledStudio.particles==='ambient'?.76:ledStudio.particles==='reactive'?.75:0;
 }
@@ -740,6 +742,12 @@ if (!window.__datamathFallbackActive) keys.forEach(([label,action,row,col])=>{
 });
 window.addEventListener('keydown',e=>{
  if(e.metaKey||e.ctrlKey||e.altKey)return;
+ // Don't steal keystrokes from sliders, selects, or other editable controls.
+ const target=e.target;
+ if(target instanceof HTMLElement && (
+   target.isContentEditable ||
+   target.matches('input, textarea, select, [role="textbox"]')
+ )) return;
  const map={'Enter':'equals','=':'equals','Escape':'clear','Backspace':'ce','+':'op:+','-':'op:-','*':'op:*','/':'op:/','.':'decimal'};
  let action=map[e.key];if(/^\d$/.test(e.key))action='num:'+e.key;
  if(action){e.preventDefault();press(action,e.key);}
@@ -963,13 +971,15 @@ arButton.addEventListener('click', async () => {
     }
   } catch (error) {
     console.warn('AR could not start:', error);
+    if (previewStream) stopCameraPreview();
+    else restoreAfterAr();
     setArHint('AR could not start. Check camera permissions and HTTPS, then try again.');
     setArButtonState(false, 'AR MODE');
     tabletop.visible = true;
     controls.enabled = true;
   }
 });
-function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setSize(w,h);}
+function resize(){const w=sceneEl.clientWidth,h=sceneEl.clientHeight;if(!w||!h)return;const aspect=w/h;camera.left=-viewHeight*aspect/2;camera.right=viewHeight*aspect/2;camera.top=viewHeight/2;camera.bottom=-viewHeight/2;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(w,h,false);}
 new ResizeObserver(resize).observe(sceneEl);
 renderer.setAnimationLoop((time, frame)=>{
   controls.update();
