@@ -269,3 +269,39 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .view-presets button{min-height:31px;padding:7px 8px;border:1px solid #5b4430;border-radius:4px;background:#21170f;color:#bfa582;font:8px var(--mono);letter-spacing:.06em;touch-action:manipulation}
 .view-presets button:hover,.view-presets button[aria-pressed="true"]{border-color:#c29b67;background:#493321;color:#fff0dc}
 @media(max-width:650px){.view-presets{width:100%;max-width:none;gap:6px}.view-presets button{flex:1;min-height:38px;font-size:8px}}
+
+/* Prominent, compact live-radio dock in the hero column. */
+.radio-card{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:12px;margin-top:24px;padding:14px;border:1px solid #8a6744;border-radius:8px;background:linear-gradient(125deg,#302116f2,#19120df2);box-shadow:0 12px 28px #0004,inset 0 1px #f2d1a018;max-width:510px}
+.radio-frequency{display:flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:54px;border:1px solid #c5a06b;border-radius:50%;font:700 17px Georgia,serif;letter-spacing:-.04em;color:#f2d3a3;box-shadow:0 0 18px #c29b6715}
+.radio-frequency span{font:8px var(--mono);letter-spacing:.18em;margin-top:2px}
+.radio-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.radio-kicker{font:8px var(--mono);letter-spacing:.12em;color:#c7a777}
+.radio-copy strong{font-size:12px;letter-spacing:.08em;color:#f4e5ce}
+.radio-copy small{font:8px var(--mono);letter-spacing:.03em;color:#a8957d;line-height:1.4}
+.radio-copy small[data-state="live"]{color:#a9d49e}
+.radio-copy small[data-state="fallback"]{color:#e8c17d}
+.radio-copy small[data-state="error"]{color:#ff9b84}
+.radio-play-button{grid-column:3;grid-row:1;border:1px solid #d0ad78;border-radius:5px;background:linear-gradient(180deg,#d5b17a,#9c7042);color:#21160d;padding:11px 13px;font:800 9px var(--mono);letter-spacing:.04em;min-height:44px;box-shadow:0 3px 0 #674525;white-space:nowrap;touch-action:manipulation;transition:transform .15s,filter .15s}
+.radio-play-button:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.radio-play-button:active{transform:translateY(2px);box-shadow:0 1px 0 #674525}
+.radio-play-button.is-playing{background:linear-gradient(180deg,#f1d6a7,#bd8e52)}
+.radio-station-link{grid-column:2/4;grid-row:2;justify-self:end;color:#b8a083;text-decoration:none;font:8px var(--mono);letter-spacing:.08em}
+.radio-station-link:hover{color:#fff0d9}
+#arButton{min-height:46px}
+@media(max-width:900px){.radio-card{max-width:720px}}
+@media(max-width:650px){
+ .radio-card{grid-template-columns:46px minmax(0,1fr) auto;gap:9px;margin-top:20px;padding:11px}
+ .radio-frequency{width:46px;height:46px;font-size:15px}
+ .radio-kicker{font-size:7px}
+ .radio-copy strong{font-size:10px}
+ .radio-copy small{font-size:7px}
+ .radio-play-button{padding:10px 9px;min-height:44px;font-size:8px}
+ .radio-play-button span{display:inline}
+ .radio-station-link{font-size:7px}
+}
+@media(max-width:390px){
+ .radio-card{grid-template-columns:40px minmax(0,1fr);gap:9px}
+ .radio-frequency{width:40px;height:40px;font-size:14px}
+ .radio-play-button{grid-column:1/3;grid-row:2;width:100%}
+ .radio-station-link{grid-column:1/3;grid-row:3}
+}
