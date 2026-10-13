@@ -130,11 +130,54 @@ function cylinder(radius,height,material,parent,x,y,z,segments=24){
   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,segments),material);
   mesh.position.set(x,y,z); mesh.castShadow=true; parent.add(mesh); return mesh;
 }
-// Rebuilt TI-2500-inspired model from a clean, consistent coordinate layout.
-// Face points upward (+Y); the calculator's top is +Z, so the order is:
-// wordmark -> red LED window -> keypad. All face parts share the same surface plane.
-roundedBox(3.28,.48,4.02,.19,edgeMat,calculator,0,0,0);
-roundedBox(3.17,.38,3.91,.16,bodyMat,calculator,0,.19,0);
+// TI Datamath-inspired casing. The front remains a clean, flat plane so the
+// display, lettering, and keys stay aligned; the rear wall tapers into a wedge.
+// The lower keypad end is deeper than the display end, matching the molded shell
+// profile of a compact vintage calculator and making the side view read correctly.
+function makeWedgeGeometry(width, depth, frontY, backTopY, backBottomY) {
+  const halfW = width / 2;
+  const halfD = depth / 2;
+  const front = [
+    [-halfW, frontY, -halfD], [halfW, frontY, -halfD],
+    [halfW, frontY, halfD], [-halfW, frontY, halfD]
+  ];
+  const back = [
+    [-halfW, backBottomY, -halfD], [halfW, backBottomY, -halfD],
+    [halfW, backTopY, halfD], [-halfW, backTopY, halfD]
+  ];
+  const positions = [];
+  const addQuad = (a, b, c, d) => {
+    // Separate face vertices preserve crisp, molded-plastic edges.
+    for (const p of [a, d, c, a, c, b]) positions.push(...p);
+  };
+  addQuad(front[0], front[1], front[2], front[3]); // broad front face
+  addQuad(back[0], back[3], back[2], back[1]);      // sloped rear shell
+  addQuad(front[0], back[0], back[1], front[1]);   // bottom edge
+  addQuad(front[1], back[1], back[2], front[2]);   // right side
+  addQuad(front[2], back[2], back[3], front[3]);   // thin display-end edge
+  addQuad(front[3], back[3], back[0], front[0]);   // left side
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.computeVertexNormals();
+  geometry.computeBoundingBox();
+  geometry.computeBoundingSphere();
+  return geometry;
+}
+function wedgeShell(width, depth, frontY, backTopY, backBottomY, material, parent) {
+  const mesh = new THREE.Mesh(
+    makeWedgeGeometry(width, depth, frontY, backTopY, backBottomY),
+    material
+  );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  parent.add(mesh);
+  return mesh;
+}
+// The darker outer seam peeks around the lighter face shell, like a real case joint.
+wedgeShell(3.28, 4.02, .27, .015, -.29, edgeMat, calculator);
+wedgeShell(3.12, 3.86, .385, .055, -.185, bodyMat, calculator);
+// A fine lower-edge lip catches warm light and makes the case thickness legible in orbit.
+roundedBox(2.94, .055, .10, .025, edgeMat, calculator, 0, -.19, -1.91);
 
 // Thin raised bezel surrounding the LED window.
 roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
