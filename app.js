@@ -87,8 +87,8 @@ function makePlasticGrain(){
   return texture;
 }
 const plasticGrain=makePlasticGrain();
-const bodyMat = new THREE.MeshPhysicalMaterial({ color:'#c6ad83', map:plasticGrain, roughness:.36, metalness:0, bumpMap:plasticGrain, bumpScale:.012, clearcoat:.24, clearcoatRoughness:.42 });
-const edgeMat = new THREE.MeshPhysicalMaterial({ color:'#947957', map:plasticGrain, roughness:.39, metalness:0, bumpMap:plasticGrain, bumpScale:.01, clearcoat:.18, clearcoatRoughness:.46 });
+const bodyMat = new THREE.MeshPhysicalMaterial({ color:'#d2c5a5', map:plasticGrain, roughness:.36, metalness:0, bumpMap:plasticGrain, bumpScale:.012, clearcoat:.24, clearcoatRoughness:.42 });
+const edgeMat = new THREE.MeshPhysicalMaterial({ color:'#a99a78', map:plasticGrain, roughness:.39, metalness:0, bumpMap:plasticGrain, bumpScale:.01, clearcoat:.18, clearcoatRoughness:.46 });
 const darkMat = new THREE.MeshPhysicalMaterial({ color:'#382a20', roughness:.38, metalness:0, clearcoat:.15, clearcoatRoughness:.4 });
 const keyMat = new THREE.MeshPhysicalMaterial({ color:'#5a402b', roughness:.32, metalness:0, clearcoat:.28, clearcoatRoughness:.32 });
 const keyTopMat = new THREE.MeshPhysicalMaterial({ color:'#77784f', roughness:.35, metalness:0, clearcoat:.24, clearcoatRoughness:.35 });
@@ -173,56 +173,45 @@ function wedgeShell(width, depth, frontY, backTopY, backBottomY, material, paren
   parent.add(mesh);
   return mesh;
 }
-// One continuous wedge keeps the recognizable vintage side profile.
+// TI-2500 reference pass: warm ivory molded upper shell, inset black face,
+// rounded perimeter, and a separate lower seam. Keep front-facing parts attached.
+const frontInsertMat = new THREE.MeshPhysicalMaterial({
+  color:'#11110f', roughness:.52, metalness:0, clearcoat:.12, clearcoatRoughness:.5
+});
+const seamMat = mat('#241f18',.66);
 wedgeShell(3.46, 4.20, .255, -.055, -.52, edgeMat, calculator);
-// Soft molded edge rails overlap the shell's long sides to visually round the silhouette.
-roundedBox(.105, .105, 3.92, .045, bodyMat, calculator, -1.685, .245, 0);
-roundedBox(.105, .105, 3.92, .045, bodyMat, calculator, 1.685, .245, 0);
-// Dark recessed channel around the front panel, followed by the inset face itself.
-roundedBox(3.20, .038, 3.94, .16, darkMat, calculator, 0, .292, 0);
-roundedBox(3.08, .070, 3.82, .14, bodyMat, calculator, 0, .324, 0);
-// Fine, continuous-looking perimeter seam; the corner joints are tucked under the rails.
-roundedBox(3.12, .014, .028, .012, darkMat, calculator, 0, .365, 1.895);
-roundedBox(3.12, .014, .028, .012, darkMat, calculator, 0, .365, -1.895);
-roundedBox(.028, .014, 3.78, .012, darkMat, calculator, -1.545, .365, 0);
-roundedBox(.028, .014, 3.78, .012, darkMat, calculator, 1.545, .365, 0);
-// Warm lower lip follows the deeper keypad-end profile.
-roundedBox(2.98, .065, .12, .025, edgeMat, calculator, 0, -.385, -1.99);
+// Broad softly rounded front surround: this reads as the molded cream bezel.
+roundedBox(3.20,.105,3.98,.19,bodyMat,calculator,0,.305,0);
+// Rounded side shoulders soften the silhouette without flattening the wedge.
+roundedBox(.11,.11,3.92,.048,bodyMat,calculator,-1.675,.245,0);
+roundedBox(.11,.11,3.92,.048,bodyMat,calculator,1.675,.245,0);
+// A narrow split line separates the upper housing from the lower base.
+roundedBox(3.24,.018,.032,.012,seamMat,calculator,0,-.145,-2.045);
+roundedBox(3.24,.018,.032,.012,seamMat,calculator,0,-.145,2.045);
+roundedBox(.032,.018,4.00,.012,seamMat,calculator,-1.70,-.145,0);
+roundedBox(.032,.018,4.00,.012,seamMat,calculator,1.70,-.145,0);
+// Continuous black face insert: the display and all keys sit within one dark field.
+roundedBox(2.86,.05,3.67,.13,frontInsertMat,calculator,0,.405,-.02);
+// Fine inner trim line along the cream surround's outer perimeter.
+roundedBox(3.12,.012,.022,.009,edgeMat,calculator,0,.365,1.93);
+roundedBox(3.12,.012,.022,.009,edgeMat,calculator,0,.365,-1.93);
+roundedBox(.022,.012,3.82,.009,edgeMat,calculator,-1.55,.365,0);
+roundedBox(.022,.012,3.82,.009,edgeMat,calculator,1.55,.365,0);
+// The lower lip is a separate molded piece, as on the photographed calculator.
+roundedBox(2.98,.075,.14,.035,bodyMat,calculator,0,-.36,-2.00);
 
-// Rear service details: a recessed battery well, two visible AA-style cells,
-// and a separate cover parked beside the well so both parts can be inspected.
-const rearParts = new THREE.Group();
-rearParts.rotation.x = .11; // follows the slight slope of the wedge's back
-rearParts.position.set(0, -.30, -.12);
-calculator.add(rearParts);
-// Well rim and dark cavity.
-roundedBox(1.38, .035, 1.28, .09, edgeMat, rearParts, .67, -.025, 0);
-roundedBox(1.24, .025, 1.14, .07, darkMat, rearParts, .67, -.047, 0);
-// Two battery cells sit visibly inside the compartment, with metallic end caps.
-const batteryBodyMat = new THREE.MeshStandardMaterial({color:'#c5b58a',roughness:.42,metalness:.18});
-const batteryEndMat = new THREE.MeshStandardMaterial({color:'#b9bec0',roughness:.28,metalness:.72});
-for (const z of [-.27,.27]) {
-  const cell = cylinder(.19, .91, batteryBodyMat, rearParts, .67, -.078, z, 32);
-  cell.rotation.z = Math.PI/2;
-  cylinder(.19, .045, batteryEndMat, rearParts, .67-.48, -.078, z, 32).rotation.z = Math.PI/2;
-  cylinder(.11, .055, batteryEndMat, rearParts, .67+.48, -.078, z, 24).rotation.z = Math.PI/2;
-}
-// The removable-looking cover is offset from the open well, with a visible lip and four screws.
-roundedBox(1.28, .045, 1.12, .085, edgeMat, rearParts, -.78, -.035, -.05);
-roundedBox(1.18, .025, 1.02, .07, bodyMat, rearParts, -.78, -.061, -.05);
-const screwMat = new THREE.MeshStandardMaterial({color:'#77716a',metalness:.78,roughness:.3});
-for (const x of [-1.25,-.31]) for (const z of [-.43,.33]) {
-  cylinder(.055,.018,screwMat,rearParts,x,-.081,z,20);
-  roundedBox(.052,.009,.009,.003,darkMat,rearParts,x,-.092,z).rotation.y = Math.PI/4;
-}
-// Small molded side switches on both sides of the casing.
-for (const side of [-1,1]) {
-  roundedBox(.055,.14,.40,.025,darkMat,calculator,side*1.735,.02,1.08);
-  roundedBox(.095,.09,.17,.025,keyMat,calculator,side*1.765,.035,1.03);
-  roundedBox(.055,.13,.31,.022,darkMat,calculator,side*1.735,-.15,-.95);
-  roundedBox(.095,.08,.12,.022,edgeMat,calculator,side*1.765,-.14,-.95);
-}
+// Rear power socket on the short end, with a metallic bezel and dark jack opening.
+const jackMetalMat = new THREE.MeshStandardMaterial({color:'#aaa9a1',metalness:.78,roughness:.28});
+const jackRing = new THREE.Mesh(new THREE.TorusGeometry(.155,.032,10,32),jackMetalMat);
+jackRing.position.set(0,-.20,2.105); jackRing.renderOrder=6; calculator.add(jackRing);
+const jackOpening = cylinder(.125,.065,frontInsertMat,calculator,0,-.20,2.105,32);
+jackOpening.rotation.x=Math.PI/2;
+const jackInner = cylinder(.035,.068,jackMetalMat,calculator,0,-.20,2.14,20);
+jackInner.rotation.x=Math.PI/2;
 
+// A small power slider on the display-side edge, inspired by the original hardware.
+roundedBox(.06,.12,.34,.025,seamMat,calculator,1.735,.00,1.08);
+roundedBox(.09,.08,.14,.025,edgeMat,calculator,1.77,.025,1.08);
 // Thin raised bezel surrounding the LED window.
 roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
 roundedBox(2.48,.022,.61,.035,mat('#160a08',.24),calculator,0,.449,.88);
@@ -666,10 +655,9 @@ function textSprite(text,opts={}){
 const tiText=textSprite('Texas Instruments',{w:1.18,h:.19,font:'900 44px Arial'});
 tiText.rotation.x=Math.PI/2;tiText.position.set(-.55,.405,1.61);calculator.add(tiText);
 const modelText=textSprite('DATAMATH',{w:.78,h:.16,font:'900 42px Arial'});
-modelText.rotation.x=Math.PI/2;modelText.position.set(.91,.405,1.61);calculator.add(modelText);
+modelText.rotation.x=Math.PI/2;modelText.position.set(.91,.435,1.61);calculator.add(modelText);
 
-// Recessed keypad panel, with evenly spaced rows and generous margins.
-roundedBox(2.76,.065,2.42,.085,darkMat,calculator,0,.405,-.67);
+// Keycaps are seated directly over the continuous black front insert.
 const keys=[
  ['CE/D','ce',1,1],['÷','op:/',1,2],['×','op:*',1,3],['C','clear',1,4],
  ['7','num:7',2,1],['8','num:8',2,2],['9','num:9',2,3],['−','op:-',2,4],
@@ -692,22 +680,34 @@ keys.forEach(([label,action,row,col])=>{
  cap.userData={label,action,homeY:.455,top,face};top.userData.key=cap;top.userData.baseMaterial=top.material;pickables.push(top);keyMeshes.push(cap);
 });
 
-// Battery cover and rear details are kept below the face and do not intrude into the keypad.
-roundedBox(1.55,.035,1.22,.035,darkMat,calculator,0,-.245,-1.20);const hatch=roundedBox(1.78,.055,1.43,.035,bodyMat,calculator,0,-.205,-1.20);
-hatch.visible=false;hatch.userData.hatch=true;
-const hatchLabel=textSprite('BATTERY COMPARTMENT',{w:1.25,h:.15,font:'bold 18px Arial',flipX:false});
+// Rear battery bay: the cover is closed by default; the button reveals the pack.
+roundedBox(1.55,.035,1.22,.045,seamMat,calculator,0,-.245,-1.20);
+const hatch=roundedBox(1.78,.055,1.43,.085,bodyMat,calculator,0,-.205,-1.20);
+hatch.visible=true;hatch.userData.hatch=true;
+const rearScrewMat=new THREE.MeshStandardMaterial({color:'#79776f',metalness:.72,roughness:.32});
+for(const x of [-.73,.73]) for(const z of [-1.77,-.63]){
+  cylinder(.047,.018,rearScrewMat,calculator,x,-.239,z,20);
+  roundedBox(.045,.008,.008,.003,seamMat,calculator,x,-.25,z).rotation.y=Math.PI/4;
+}
+const hatchLabel=textSprite('4-CELL RECHARGEABLE PACK',{w:1.25,h:.15,font:'bold 16px Arial',flipX:false});
 hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
 const batteryGroup=new THREE.Group();calculator.add(batteryGroup);
-for(let i=0;i<2;i++){
- const battery=cylinder(.16,.78,mat(i?'#c8c9bd':'#d5c7a4',.32,.2),batteryGroup,i?.35:-.35,-.16,-1.20,28);
- battery.rotation.z=Math.PI/2;
+const batteryPackMat=mat('#c9b88e',.38,.12),batteryEndMat=mat('#b9bbb6',.3,.65);
+for(const x of [-.22,.22]) for(const z of [-1.40,-1.00]){
+  const battery=cylinder(.145,.74,batteryPackMat,batteryGroup,x,-.16,z,28);
+  battery.rotation.x=Math.PI/2;
+  cylinder(.12,.025,batteryEndMat,batteryGroup,x,-.16,z-.37,20).rotation.x=Math.PI/2;
+  cylinder(.085,.025,batteryEndMat,batteryGroup,x,-.16,z+.37,20).rotation.x=Math.PI/2;
 }
+batteryGroup.visible=false;
 const feetMat=mat('#59432f');
 for(const x of [-1.18,1.18])for(const z of [-1.58,1.58])roundedBox(.34,.075,.26,.025,feetMat,calculator,x,-.25,z);
 let hatchOpen=false;
 function toggleHatch(){
- hatchOpen=!hatchOpen;hatch.visible=!hatchOpen;hatchLabel.visible=hatchOpen;batteryGroup.visible=hatchOpen;
- hatch.position.y=hatchOpen?-.32:-.205;
+ hatchOpen=!hatchOpen;
+ hatch.visible=!hatchOpen;
+ hatchLabel.visible=hatchOpen;
+ batteryGroup.visible=hatchOpen;
  loadState.textContent=hatchOpen?'BATTERY BAY OPEN':'MODEL READY';
 }
 document.querySelector('#batteryButton').addEventListener('click',toggleHatch);
