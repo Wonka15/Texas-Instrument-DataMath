@@ -148,7 +148,7 @@ function makeWedgeGeometry(width, depth, frontY, backTopY, backBottomY) {
   const positions = [];
   const addQuad = (a, b, c, d) => {
     // Separate face vertices preserve crisp, molded-plastic edges.
-    for (const p of [a, b, c, a, c, d]) positions.push(...p);
+    for (const p of [a, d, c, a, c, b]) positions.push(...p);
   };
   addQuad(front[0], front[1], front[2], front[3]); // broad front face
   addQuad(back[0], back[3], back[2], back[1]);      // sloped rear shell
