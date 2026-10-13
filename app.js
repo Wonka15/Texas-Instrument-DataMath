@@ -258,9 +258,9 @@ function drawNixieGlyph(canvas,activeDigit,brightness=1){
  for(let digit=0;digit<=9;digit++){
   ctx.save();
   ctx.font='bold 190px Georgia, serif';
-  ctx.shadowColor=String(digit)===String(activeDigit)?'#fff0bd':'#ff6b27';
-  ctx.shadowBlur=String(digit)===String(activeDigit)?4+22*brightness:2;
-  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,248,218,'+(0.12+0.88*brightness)+')':'rgba(255,124,54,.09)';
+  ctx.shadowColor=String(digit)===String(activeDigit)?'#ff8a1f':'#ff5b18';
+  ctx.shadowBlur=String(digit)===String(activeDigit)?10+34*brightness:3.5;
+  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,139,38,'+(0.28+0.72*brightness)+')':'rgba(255,105,28,.14)';
   ctx.fillText(String(digit),96+(digit%3-1)*1.4,120+(digit%4-1.5)*.8);
   ctx.restore();
  }
@@ -300,7 +300,7 @@ for(let i=0;i<8;i++){
  drawNixieGlyph(glyphCanvas,'0',0.78);
  const glyphTexture=new THREE.CanvasTexture(glyphCanvas);glyphTexture.colorSpace=THREE.SRGBColorSpace;
  const glyphMaterial=new THREE.MeshBasicMaterial({
-  map:glyphTexture,color:'#ffb66b',transparent:true,opacity:.9,
+  map:glyphTexture,color:'#ff8a24',transparent:true,opacity:.98,
   depthWrite:false,side:THREE.DoubleSide,toneMapped:false
  });
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
@@ -321,7 +321,7 @@ function setNixieDigits(chars,dotSlot){
   const material=glyph.material;
   drawNixieGlyph(nixieGlyphCanvases[i],active,effectiveLedBrightness());
   nixieGlyphTextures[i].needsUpdate=true;
-  material.color.set('#ff9b54');
+  material.color.set('#ff7a1a');
   material.opacity=active===' '?0:.15+.85*effectiveLedBrightness();
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
@@ -473,12 +473,22 @@ function setDarkMode(enabled){
   if(face?.userData?.labelCanvas&&face.material?.map){
    const canvas=face.userData.labelCanvas,ctx=canvas.getContext('2d'),opts=face.userData.labelOptions||{};
    ctx.clearRect(0,0,canvas.width,canvas.height);
-   ctx.fillStyle=darkMode?(action==='equals'?'#d9b18c':action==='clear'||action==='ce'?'#d2a17c':action.startsWith('op:')?'#d0a27e':'#c7b099'):(opts.color||'#080604');
+   ctx.fillStyle=darkMode?(action==='equals'?'#ffd36a':action==='clear'||action==='ce'?'#ffc65c':action.startsWith('op:')?'#f7c85b':'#e8b94e'):(opts.color||'#080604');
    ctx.font=opts.font||'bold 34px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
    if(opts.flipX===false)ctx.fillText(face.userData.labelText,256,64);
    else{ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(face.userData.labelText,256,64);ctx.restore();}
    face.material.map.needsUpdate=true;
   }
+ });
+ [tiText,modelText].forEach(face=>{
+  if(!face?.userData?.labelCanvas||!face.material?.map)return;
+  const canvas=face.userData.labelCanvas,ctx=canvas.getContext('2d'),opts=face.userData.labelOptions||{};
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=darkMode?'#e8b94e':(opts.color||'#24180f');
+  ctx.font=opts.font||'bold 34px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+  if(opts.flipX===false)ctx.fillText(face.userData.labelText,256,64);
+  else{ctx.save();ctx.translate(512,0);ctx.scale(-1,1);ctx.fillText(face.userData.labelText,256,64);ctx.restore();}
+  face.material.map.needsUpdate=true;
  });
  applyLedStudio();
 }
@@ -490,9 +500,9 @@ function flash3DKey(action){
  if(top.userData.glowTimer)clearTimeout(top.userData.glowTimer);
  if(!top.userData.originalMaterial)top.userData.originalMaterial=top.material;
  if(top.material===top.userData.originalMaterial)top.material=top.userData.originalMaterial.clone();
- top.material.emissive.set(action==='equals'?0xff6a20:0xff281b);
- top.material.emissiveIntensity=action==='equals'?2.8:2.1;
- top.userData.glowTimer=setTimeout(()=>{top.material=top.userData.originalMaterial;top.userData.glowTimer=null;},160);
+ top.material.emissive.set(action==='equals'?0xffa12a:0xff6a16);
+ top.material.emissiveIntensity=action==='equals'?3.1:2.45;
+ top.userData.glowTimer=setTimeout(()=>{top.material=top.userData.originalMaterial;top.userData.glowTimer=null;},460);
 }
 function applyLedStudio(){
  const b=effectiveLedBrightness();
@@ -758,7 +768,7 @@ if (!window.__datamathFallbackActive) keys.forEach(([label,action,row,col])=>{
  b.className='key'+(isFunction?' utility':'')+(isOperator||label==='='?' operator':'');
  b.textContent=label;b.type='button';b.setAttribute('aria-label',label==='C'?'Clear all':label);
  b.style.gridRow=String(row);b.style.gridColumn=label==='0'?'1 / span 2':String(col);
- b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),90);});
+ b.addEventListener('click',()=>{press(action,label);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),160);});
  keypad.appendChild(b);
 });
 window.addEventListener('keydown',e=>{
@@ -792,7 +802,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  const k=hit.object.userData.key;
  press(k.userData.action,k.userData.label);
  k.position.y=k.userData.homeY-.045;
- setTimeout(()=>{k.position.y=k.userData.homeY;},90);
+ setTimeout(()=>{k.position.y=k.userData.homeY;},160);
 });
 function setOrthoView(name){
   calculator.rotation.set(0,0,0);
