@@ -12,7 +12,7 @@
   <main class="app">
     <header class="topbar">
       <a class="wordmark" href="./" aria-label="Datamath home"><span class="mark">TI</span><span>DATAMATH <small>OBJECT STUDY / 1970s</small></span></a>
-      <div class="top-actions"><span class="live-dot"></span><span class="status">INTERACTIVE MODEL</span><button id="soundToggle" class="small-button" aria-pressed="true" type="button" title="Toggle calculator key sounds">♫ SOUND ON</button><button id="musicToggle" class="small-button music-button" aria-pressed="false" type="button" title="Play or pause KZSC 88.1 FM">▶ KZSC</button></div>
+      <div class="top-actions"><span class="live-dot"></span><span class="status">INTERACTIVE MODEL</span><button id="soundToggle" class="small-button" aria-pressed="true" type="button" title="Toggle calculator key sounds">♫ SOUND ON</button></div>
     </header>
     <section class="hero">
       <div class="intro">
@@ -20,10 +20,16 @@
         <h1>A little piece<br>of <em>computing history.</em></h1>
         <p class="lede">Explore a Datamath-inspired calculator in 3D. Drag to orbit, use the four viewport arrows for precise rotation, press the keys, and listen to the tactile clicks.</p>
         <div class="hint"><span class="mouse-icon">↻</span> DRAG TO ROTATE <span class="hint-sep">·</span> SCROLL TO ZOOM</div>
+        <section class="radio-card" aria-label="KZSC Santa Cruz live radio player">
+          <div class="radio-frequency" aria-hidden="true">88.1<span>FM</span></div>
+          <div class="radio-copy"><span class="radio-kicker">UCSC STUDENT RADIO</span><strong>KZSC SANTA CRUZ</strong><small id="radioStatus" role="status" aria-live="polite">LIVE STREAM · HIGH QUALITY</small></div>
+          <button id="musicToggle" class="radio-play-button" aria-pressed="false" type="button" title="Play KZSC 88.1 FM">▶ <span>LISTEN LIVE</span></button>
+          <a class="radio-station-link" href="https://kzsc.org/listen/" target="_blank" rel="noopener noreferrer">STATION ↗</a>
+        </section>
       </div>
       <div class="scene-wrap">
         <div class="scene-label"><span>01 / OBJECT VIEW</span><span id="viewLabel">3D ORBIT VIEW</span></div>
-        <div id="scene" role="img" aria-label="Interactive three-dimensional vintage calculator model"><video id="arCameraFeed" class="ar-camera-feed" playsinline muted aria-hidden="true"></video><div id="arHint" class="ar-hint" role="status" aria-live="polite" hidden></div></div>
+        <div id="scene" role="img" aria-label="Interactive three-dimensional vintage calculator model"><video id="arCameraFeed" class="ar-camera-feed" playsinline webkit-playsinline muted autoplay aria-hidden="true"></video><div id="arHint" class="ar-hint" role="status" aria-live="polite" hidden></div></div>
         <div class="scene-toolbar">
           <div class="orbit-pad" role="group" aria-label="Rotate calculator viewport">
             <button class="orbit-up" data-orbit="up" title="Orbit up" aria-label="Orbit up">↑</button>
@@ -40,7 +46,7 @@
             <button type="button" data-view="top" aria-pressed="false">TOP</button>
           </div>
           <div class="scene-controls">
-            <button id="arButton" title="Open augmented reality or camera preview" type="button">◎ <span>AR MODE</span></button>
+            <button id="arButton" title="Place the model in supported AR, or use camera-overlay mode in iPhone/iPad Safari" type="button">◎ <span>AR / CAMERA</span></button>
           </div>
         </div>
         <div class="scene-foot"><span>MODEL: DATAMATH-STYLE / INTERACTIVE STUDY</span><span id="loadState">INITIALIZING 3D…</span></div>
@@ -190,6 +196,6 @@
     setTimeout(activateFallback, 5000);
   })();
   </script>
-  <script type="module" src="./app.js?v=socket-backface-no-battery-button-1"></script>
+  <script type="module" src="./app.js?v=kzsc-resilient-radio-ios-safari-ar-1"></script>
 </body>
 </html>
