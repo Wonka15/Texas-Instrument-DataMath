@@ -784,8 +784,9 @@ function setOrthoView(name){
     'top':new THREE.Vector3(0,0,10),
     'bottom':new THREE.Vector3(0,0,-10)
   };
-  // Keep the top of the calculator (+Z) at the top of the screen in the face view.
-  if(name==='face'||name==='rear') camera.up.set(0,0,name==='face'?1:-1);
+  // World +Z is the calculator's top edge. Keep it upright in front, rear,
+  // and side views; use world +Y as screen-up for top/bottom inspection.
+  camera.up.set(0,0,1);
   if(name==='top'||name==='bottom') camera.up.set(0,1,0);
   camera.position.copy(positions[name]);
   camera.zoom=1;camera.updateProjectionMatrix();
@@ -797,6 +798,10 @@ function resetView(){
  controls.target.set(0,0,0);controls.update();calculator.rotation.set(0,0,0);viewLabel.textContent='3D ORBIT VIEW';
 }
 document.querySelector('#homeView').addEventListener('click',resetView);
+document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>{
+ setOrthoView(button.dataset.view);
+ document.querySelectorAll('[data-view]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+}));
 document.querySelectorAll('[data-orbit]').forEach(button=>button.addEventListener('click',()=>{
  const step=Math.PI/12;
  if(button.dataset.orbit==='left')controls.rotateLeft(step);
