@@ -916,7 +916,7 @@ function restoreAfterAr() {
   calculator.scale.copy(arOriginalScale);
   calculator.position.copy(arOriginalPosition);
   calculator.quaternion.copy(arOriginalQuaternion);  controls.enabled = true;
-  setArButtonState(false, 'AR MODE');
+  setArButtonState(false, 'AR / CAMERA');
   setArHint('', false);
   loadState.textContent = 'MODEL READY';
 }
@@ -1016,7 +1016,7 @@ arButton.addEventListener('click', async () => {
     if (previewStream) stopCameraPreview();
     else restoreAfterAr();
     setArHint(error?.name === 'NotAllowedError' ? 'Camera permission was denied. In iOS Settings, allow Safari camera access, then reload and try again.' : 'AR/camera could not start. Use HTTPS, allow camera access, and try again.');
-    setArButtonState(false, 'AR MODE');
+    setArButtonState(false, 'AR / CAMERA');
     tabletop.visible = true;
     controls.enabled = true;
   }
