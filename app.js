@@ -254,16 +254,30 @@ function drawNixieGlyph(canvas,activeDigit,brightness=1){
  const ctx=canvas.getContext('2d');
  ctx.clearRect(0,0,canvas.width,canvas.height);
  ctx.textAlign='center';ctx.textBaseline='middle';
- // Every cathode is faintly visible through the glass; the selected numeral glows brighter.
- for(let digit=0;digit<=9;digit++){
-  ctx.save();
-  ctx.font='bold 190px Georgia, serif';
-  ctx.shadowColor=String(digit)===String(activeDigit)?'#ff8a1f':'#ff5b18';
-  ctx.shadowBlur=String(digit)===String(activeDigit)?10+34*brightness:3.5;
-  ctx.fillStyle=String(digit)===String(activeDigit)?'rgba(255,139,38,'+(0.28+0.72*brightness)+')':'rgba(255,105,28,.14)';
-  ctx.fillText(String(digit),96+(digit%3-1)*1.4,120+(digit%4-1.5)*.8);
-  ctx.restore();
- }
+ // Draw only the active cathode: overlapping every numeral made the display muddy.
+ // A soft orange halo sits behind a crisp, bright core for much better legibility.
+ if(activeDigit===' '||activeDigit==null)return;
+ const digit=String(activeDigit);
+ const x=canvas.width/2,y=canvas.height/2;
+ const b=Math.max(.2,Math.min(1,brightness));
+ ctx.save();
+ ctx.font='900 196px Arial, sans-serif';
+ ctx.lineJoin='round';
+ ctx.shadowColor='#ff6415';
+ ctx.shadowBlur=9+17*b;
+ ctx.fillStyle='#ff7418';
+ ctx.globalAlpha=.9;
+ ctx.fillText(digit,x,y);
+ ctx.restore();
+ // Crisp yellow-orange core keeps the numeral readable even with glow enabled.
+ ctx.save();
+ ctx.font='900 196px Arial, sans-serif';
+ ctx.lineJoin='round';
+ ctx.shadowBlur=0;
+ ctx.fillStyle=brightness>.35?'#ffe0a0':'#ffb04a';
+ ctx.globalAlpha=.78+.22*b;
+ ctx.fillText(digit,x,y);
+ ctx.restore();
 }
 for(let i=0;i<8;i++){
  const tube=new THREE.Group();
@@ -304,7 +318,7 @@ for(let i=0;i<8;i++){
   depthWrite:false,side:THREE.DoubleSide,toneMapped:false
  });
  nixieGlyphCanvases.push(glyphCanvas);nixieGlyphTextures.push(glyphTexture);
- const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.205,.252),glyphMaterial);
+ const glyph=new THREE.Mesh(new THREE.PlaneGeometry(.22,.27),glyphMaterial);
  // Face the viewer (+Y); compensate for the plane's rotated local up and camera-right axes.
  glyph.rotation.x=Math.PI/2;
  glyph.scale.set(-1,1,1); // Local up now maps to world up; flip only X because the camera sees the back face.
@@ -322,7 +336,7 @@ function setNixieDigits(chars,dotSlot){
   drawNixieGlyph(nixieGlyphCanvases[i],active,effectiveLedBrightness());
   nixieGlyphTextures[i].needsUpdate=true;
   material.color.set('#ff7a1a');
-  material.opacity=active===' '?0:.15+.85*effectiveLedBrightness();
+  material.opacity=active===' '?0:.72+.28*effectiveLedBrightness();
   // Decimal point is a separate tiny phosphor bead beneath the relevant tube.
   let dot=tube.userData.decimalDot;
   if(!dot){
