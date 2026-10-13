@@ -204,8 +204,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 
 /* Display mode buttons share the studio row; Nixie mode gets a warm glass-like accent. */
 .display-mode-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:0 0 17px}
-.display-mode-actions button{min-height:39px;padding:10px 13px;border:1px solid #6b5137;border-radius:5px;background:linear-gradient(180deg,#38291d,#21180f);color:#e4c69f;font:9px var(--mono);letter-spacing:.08em;box-shadow:0 3px 0 #100c08,inset 0 1px #ffffff0d;transition:box-shadow .16s,border-color .16s,transform .12s}
+.display-mode-actions button{position:relative;z-index:2;pointer-events:auto;touch-action:manipulation;min-height:39px;padding:10px 13px;border:1px solid #6b5137;border-radius:5px;background:linear-gradient(180deg,#38291d,#21180f);color:#e4c69f;font:9px var(--mono);letter-spacing:.08em;box-shadow:0 3px 0 #100c08,inset 0 1px #ffffff0d;transition:box-shadow .16s,border-color .16s,transform .12s}
 .display-mode-actions button[aria-pressed="true"]{border-color:#d79a61;background:linear-gradient(180deg,#58331f,#2a160f);color:#ffe0bd;box-shadow:0 0 12px #ff7a3328,inset 0 0 8px #ff7a3312}
+.phosphor-toggle[aria-pressed="false"]{border-color:#6d7560!important;color:#c7d4b4!important;box-shadow:inset 0 0 8px #a8c98712!important}
 .nixie-toggle[aria-pressed="true"]{border-color:#d78a54!important;color:#ffd1a1!important;box-shadow:0 0 13px #ff7a3330,inset 0 0 9px #ff7a3318!important}
 .datamath-dark-mode .display-mode-actions button{border-color:#85533c;color:#f0c5a0;box-shadow:0 0 9px #ff8a381a,0 0 3px #ffb36b22,inset 0 0 0 1px #ffad7214}
 .datamath-dark-mode .display-mode-actions button[aria-pressed="true"]{border-color:#e5a16a;color:#ffe1c0;box-shadow:0 0 13px #ff813637,inset 0 0 10px #ff81361a}
