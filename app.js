@@ -521,7 +521,7 @@ function flash3DKey(action){
 function applyLedStudio(){
  const b=effectiveLedBrightness();
  const futuristic=ledStudio.style==='futuristic';
- const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:ledStudio.style==='cinematic'?1.32:1.08;
+ const styleScale=ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.48:futuristic?1.85:ledStudio.style==='cinematic'?.88:1.08;
  // Retro-futuristic mode changes segment color, bloom size, and light spill for a clear preset difference.
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive());
  ledGlow.scale.set(2.8*styleScale,1.02*styleScale,1);
@@ -530,13 +530,13 @@ function applyLedStudio(){
  nixieTubes.forEach(tube=>{tube.visible=nixieMode;});
  ledSparks.visible=ledStudio.particles!=='off'&&!nixieMode;
  ledGlow.material.color.set(futuristic?0xff6747:0xff2a16);
- ledGlow.material.opacity=(futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.96:.88)*effectiveDisplayDrive();
+ ledGlow.material.opacity=(futuristic?.98:ledStudio.style==='clean'?.48:ledStudio.style==='authentic'?.64:ledStudio.style==='cinematic'?.68:.88)*effectiveDisplayDrive();
  ledLight.color.set(futuristic?0xff5637:0xff1b0b);
- ledLight.intensity=(darkMode?3.2:1.75)*effectiveDisplayDrive()*(ledStudio.style==='cinematic'?1.3:futuristic?1.75:1)*displaySegmentFactor;
+ ledLight.intensity=(darkMode?3.2:1.75)*effectiveDisplayDrive()*(ledStudio.style==='cinematic'?1.0:futuristic?1.75:1)*displaySegmentFactor;
  // Layered bloom spreads the phosphor haze across the entire display window.
  displayBloomLayers.forEach((layer,i)=>{
   layer.material.color.set(futuristic?0xff5037:0xff2015);
-  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25)*effectiveDisplayDrive()*(i===2?.9:1);
+  layer.material.opacity=(ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.14:.25)*effectiveDisplayDrive()*(i===2?.9:1);
   layer.scale.set((1.25+i*.18)*styleScale,(.48+i*.08)*styleScale,1);
  });
  tableReflection.material.opacity=(darkMode?1.2:.9)*effectiveDisplayDrive()*displaySegmentFactor*(futuristic?1.35:1);
@@ -570,7 +570,7 @@ function animateLedEffects(timeMs){
  ledPulse=Math.max(0,ledPulse-dt*1.9);
  const b=effectiveLedBrightness();
  const futuristic=ledStudio.style==='futuristic';
- const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
+ const base=ledStudio.style==='cinematic'?.82:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive()*pulse);
  if(nixieMode){
   // Apply the selected phosphor behavior to the actual 3D tube glyphs as well.
@@ -582,7 +582,7 @@ function animateLedEffects(timeMs){
  }
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
  displayBloomLayers.forEach((layer,i)=>{
-  const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.34:.25;
+  const profile=ledStudio.style==='clean'?.07:ledStudio.style==='authentic'?.14:futuristic?.38:ledStudio.style==='cinematic'?.14:.25;
   layer.material.opacity=profile*effectiveDisplayDrive()*pulse*(i===2?.9:1)+ledPulse*.02;
  });
  ledLight.intensity=((darkMode?3.2:1.75)*effectiveDisplayDrive()*pulse*(futuristic?1.75:1)+ledPulse*(darkMode?.9:.6))*displaySegmentFactor;
