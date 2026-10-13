@@ -28,9 +28,16 @@
           <div class="orbit-pad" role="group" aria-label="Rotate calculator viewport">
             <button class="orbit-up" data-orbit="up" title="Orbit up" aria-label="Orbit up">↑</button>
             <button class="orbit-left" data-orbit="left" title="Orbit left" aria-label="Orbit left">←</button>
-            <button class="orbit-home" id="homeView" title="Reset view" aria-label="Reset view">•</button>
+            <button class="orbit-home" id="homeView" title="Reset orbit view" aria-label="Reset orbit view">•</button>
             <button class="orbit-right" data-orbit="right" title="Orbit right" aria-label="Orbit right">→</button>
             <button class="orbit-down" data-orbit="down" title="Orbit down" aria-label="Orbit down">↓</button>
+          </div>
+          <div class="view-presets" role="group" aria-label="Fixed calculator inspection views">
+            <button type="button" data-view="face" aria-pressed="false">FRONT</button>
+            <button type="button" data-view="rear" aria-pressed="false">BACK</button>
+            <button type="button" data-view="left" aria-pressed="false">LEFT</button>
+            <button type="button" data-view="right" aria-pressed="false">RIGHT</button>
+            <button type="button" data-view="top" aria-pressed="false">TOP</button>
           </div>
           <div class="scene-controls">
             <button id="batteryButton" title="Open battery compartment">▣ <span>BATTERY BAY</span></button>
@@ -184,6 +191,6 @@
     setTimeout(activateFallback, 5000);
   })();
   </script>
-  <script type="module" src="./app.js?v=stability-audit-1"></script>
+  <script type="module" src="./app.js?v=inspection-views-1"></script>
 </body>
 </html>
