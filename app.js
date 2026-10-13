@@ -572,7 +572,12 @@ function animateLedEffects(timeMs){
  const base=ledStudio.style==='cinematic'?.98:ledStudio.style==='authentic'?.72:ledStudio.style==='clean'?.42:futuristic?1.08:1;
  ledMat.color.set(futuristic?0xff6047:0xff2418).multiplyScalar(effectiveDisplayDrive()*pulse);
  if(nixieMode){
-  nixieDigitMaterials.forEach(material=>{material.opacity=Math.min(1,.15+.85*b+(ledStudio.flicker==='vintage'?(pulse<.8?.08:0):0));});
+  // Apply the selected phosphor behavior to the actual 3D tube glyphs as well.
+  // Keep a small floor so the digits never vanish at low brightness.
+  const baseNixieOpacity=.72+.28*b;
+  nixieDigitMaterials.forEach(material=>{
+   material.opacity=Math.max(.08,Math.min(1,baseNixieOpacity*pulse+ledPulse*.06));
+  });
  }
  ledGlow.material.opacity=Math.min(1,(futuristic?.98:base)*effectiveDisplayDrive()*pulse+ledPulse*.08);
  displayBloomLayers.forEach((layer,i)=>{
@@ -614,7 +619,13 @@ function wireLedStudio(){
  particles.value=ledStudio.particles;flicker.value=ledStudio.flicker;reflections.checked=ledStudio.reflections;
  brightnessValue.textContent=ledStudio.brightness+'%';
  style.addEventListener('change',()=>{ledStudio.style=style.value;applyLedStudio();});
- brightness.addEventListener('input',()=>{ledStudio.brightness=Number(brightness.value);brightnessValue.textContent=ledStudio.brightness+'%';applyLedStudio();});
+ brightness.addEventListener('input',()=>{
+  ledStudio.brightness=Number(brightness.value);
+  brightnessValue.textContent=ledStudio.brightness+'%';
+  applyLedStudio();
+  // Redraw the canvas-backed Nixie numerals immediately when brightness changes.
+  setLed(document.querySelector('#display')?.textContent||'0');
+ });
  particles.addEventListener('change',()=>{ledStudio.particles=particles.value;applyLedStudio();});
  flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');applyLedStudio();});
  document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');
