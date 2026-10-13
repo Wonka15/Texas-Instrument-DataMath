@@ -200,14 +200,18 @@ roundedBox(.022,.012,3.82,.009,edgeMat,calculator,1.55,.365,0);
 // The lower lip is a separate molded piece, as on the photographed calculator.
 roundedBox(2.98,.075,.14,.035,bodyMat,calculator,0,-.36,-2.00);
 
-// Rear power socket on the short end, with a metallic bezel and dark jack opening.
+// Rear charging socket sits on the sloped back face (normal points toward -Y).
+// At z=1.55 the wedge's rear surface is about y=-0.12; the bezel sits just proud
+// of that plane, and the jack barrel is perpendicular to the mesh rather than the end cap.
 const jackMetalMat = new THREE.MeshStandardMaterial({color:'#aaa9a1',metalness:.78,roughness:.28});
+const jackSocket = new THREE.Group();
+jackSocket.position.set(0,-.125,1.55);
+jackSocket.rotation.x=Math.PI/2;
+calculator.add(jackSocket);
 const jackRing = new THREE.Mesh(new THREE.TorusGeometry(.155,.032,10,32),jackMetalMat);
-jackRing.position.set(0,-.20,2.105); jackRing.renderOrder=6; calculator.add(jackRing);
-const jackOpening = cylinder(.125,.065,frontInsertMat,calculator,0,-.20,2.105,32);
-jackOpening.rotation.x=Math.PI/2;
-const jackInner = cylinder(.035,.068,jackMetalMat,calculator,0,-.20,2.14,20);
-jackInner.rotation.x=Math.PI/2;
+jackRing.position.z=.012; jackRing.renderOrder=6; jackSocket.add(jackRing);
+const jackOpening = cylinder(.125,.065,frontInsertMat,jackSocket,0,0,0,32);
+const jackInner = cylinder(.035,.068,jackMetalMat,jackSocket,0,0,-.025,20);
 
 // A small power slider on the display-side edge, inspired by the original hardware.
 roundedBox(.06,.12,.34,.025,seamMat,calculator,1.735,.00,1.08);
@@ -680,37 +684,16 @@ keys.forEach(([label,action,row,col])=>{
  cap.userData={label,action,homeY:.455,top,face};top.userData.key=cap;top.userData.baseMaterial=top.material;pickables.push(top);keyMeshes.push(cap);
 });
 
-// Rear battery bay: the cover is closed by default; the button reveals the pack.
+// Static rear battery cover and screw details; no interactive battery-bay control.
 roundedBox(1.55,.035,1.22,.045,seamMat,calculator,0,-.245,-1.20);
-const hatch=roundedBox(1.78,.055,1.43,.085,bodyMat,calculator,0,-.205,-1.20);
-hatch.visible=true;hatch.userData.hatch=true;
+roundedBox(1.78,.055,1.43,.085,bodyMat,calculator,0,-.205,-1.20);
 const rearScrewMat=new THREE.MeshStandardMaterial({color:'#79776f',metalness:.72,roughness:.32});
 for(const x of [-.73,.73]) for(const z of [-1.77,-.63]){
   cylinder(.047,.018,rearScrewMat,calculator,x,-.239,z,20);
   roundedBox(.045,.008,.008,.003,seamMat,calculator,x,-.25,z).rotation.y=Math.PI/4;
 }
-const hatchLabel=textSprite('4-CELL RECHARGEABLE PACK',{w:1.25,h:.15,font:'bold 16px Arial',flipX:false});
-hatchLabel.position.set(0,-.18,-1.20);hatchLabel.rotation.x=Math.PI/2;hatchLabel.visible=false;calculator.add(hatchLabel);
-const batteryGroup=new THREE.Group();calculator.add(batteryGroup);
-const batteryPackMat=mat('#c9b88e',.38,.12),batteryEndMat=mat('#b9bbb6',.3,.65);
-for(const x of [-.22,.22]) for(const z of [-1.40,-1.00]){
-  const battery=cylinder(.145,.74,batteryPackMat,batteryGroup,x,-.16,z,28);
-  battery.rotation.x=Math.PI/2;
-  cylinder(.12,.025,batteryEndMat,batteryGroup,x,-.16,z-.37,20).rotation.x=Math.PI/2;
-  cylinder(.085,.025,batteryEndMat,batteryGroup,x,-.16,z+.37,20).rotation.x=Math.PI/2;
-}
-batteryGroup.visible=false;
 const feetMat=mat('#59432f');
 for(const x of [-1.18,1.18])for(const z of [-1.58,1.58])roundedBox(.34,.075,.26,.025,feetMat,calculator,x,-.25,z);
-let hatchOpen=false;
-function toggleHatch(){
- hatchOpen=!hatchOpen;
- hatch.visible=!hatchOpen;
- hatchLabel.visible=hatchOpen;
- batteryGroup.visible=hatchOpen;
- loadState.textContent=hatchOpen?'BATTERY BAY OPEN':'MODEL READY';
-}
-document.querySelector('#batteryButton').addEventListener('click',toggleHatch);
 
 let soundEnabled=true,audioCtx=null;
 function clickSound(freq=780,duration=.055){
