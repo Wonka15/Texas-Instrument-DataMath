@@ -263,3 +263,9 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .reference-image-fallback{min-height:290px;display:grid;place-items:center;padding:24px;text-align:center;background:linear-gradient(145deg,#30251b,#19130f);color:#d7c2a3;font-size:12px;line-height:1.7}
 .reference-card img[hidden]{display:none}
 @media(max-width:600px){.reference-image-fallback{min-height:330px}}
+
+/* Fixed orthographic views make the rear, side profile, and wedge depth easy to inspect. */
+.view-presets{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;max-width:250px}
+.view-presets button{min-height:31px;padding:7px 8px;border:1px solid #5b4430;border-radius:4px;background:#21170f;color:#bfa582;font:8px var(--mono);letter-spacing:.06em;touch-action:manipulation}
+.view-presets button:hover,.view-presets button[aria-pressed="true"]{border-color:#c29b67;background:#493321;color:#fff0dc}
+@media(max-width:650px){.view-presets{width:100%;max-width:none;gap:6px}.view-presets button{flex:1;min-height:38px;font-size:8px}}
