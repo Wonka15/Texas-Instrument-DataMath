@@ -173,18 +173,55 @@ function wedgeShell(width, depth, frontY, backTopY, backBottomY, material, paren
   parent.add(mesh);
   return mesh;
 }
-// One continuous outer wedge gives the calculator a readable side profile.
-// A separate raised face plate creates the molded shoulder without stacking
-// multiple complete wedge solids on top of one another.
+// One continuous wedge keeps the recognizable vintage side profile.
 wedgeShell(3.46, 4.20, .255, -.055, -.52, edgeMat, calculator);
-roundedBox(3.12, .105, 3.86, .12, bodyMat, calculator, 0, .305, 0);
-// A thin, inset-looking perimeter seam follows the face plate's four edges.
-roundedBox(3.16, .018, .045, .012, darkMat, calculator, 0, .365, 1.905);
-roundedBox(3.16, .018, .045, .012, darkMat, calculator, 0, .365, -1.905);
-roundedBox(.045, .018, 3.80, .012, darkMat, calculator, -1.555, .365, 0);
-roundedBox(.045, .018, 3.80, .012, darkMat, calculator, 1.555, .365, 0);
+// Soft molded edge rails overlap the shell's long sides to visually round the silhouette.
+roundedBox(.105, .105, 3.92, .045, bodyMat, calculator, -1.685, .245, 0);
+roundedBox(.105, .105, 3.92, .045, bodyMat, calculator, 1.685, .245, 0);
+// Dark recessed channel around the front panel, followed by the inset face itself.
+roundedBox(3.20, .038, 3.94, .16, darkMat, calculator, 0, .292, 0);
+roundedBox(3.08, .070, 3.82, .14, bodyMat, calculator, 0, .324, 0);
+// Fine, continuous-looking perimeter seam; the corner joints are tucked under the rails.
+roundedBox(3.12, .014, .028, .012, darkMat, calculator, 0, .365, 1.895);
+roundedBox(3.12, .014, .028, .012, darkMat, calculator, 0, .365, -1.895);
+roundedBox(.028, .014, 3.78, .012, darkMat, calculator, -1.545, .365, 0);
+roundedBox(.028, .014, 3.78, .012, darkMat, calculator, 1.545, .365, 0);
 // Warm lower lip follows the deeper keypad-end profile.
 roundedBox(2.98, .065, .12, .025, edgeMat, calculator, 0, -.385, -1.99);
+
+// Rear service details: a recessed battery well, two visible AA-style cells,
+// and a separate cover parked beside the well so both parts can be inspected.
+const rearParts = new THREE.Group();
+rearParts.rotation.x = .11; // follows the slight slope of the wedge's back
+rearParts.position.set(0, -.30, -.12);
+calculator.add(rearParts);
+// Well rim and dark cavity.
+roundedBox(1.38, .035, 1.28, .09, edgeMat, rearParts, .67, -.025, 0);
+roundedBox(1.24, .025, 1.14, .07, darkMat, rearParts, .67, -.047, 0);
+// Two battery cells sit visibly inside the compartment, with metallic end caps.
+const batteryBodyMat = new THREE.MeshStandardMaterial({color:'#c5b58a',roughness:.42,metalness:.18});
+const batteryEndMat = new THREE.MeshStandardMaterial({color:'#b9bec0',roughness:.28,metalness:.72});
+for (const z of [-.27,.27]) {
+  const cell = cylinder(.19, .91, batteryBodyMat, rearParts, .67, -.078, z, 32);
+  cell.rotation.z = Math.PI/2;
+  cylinder(.19, .045, batteryEndMat, rearParts, .67-.48, -.078, z, 32).rotation.z = Math.PI/2;
+  cylinder(.11, .055, batteryEndMat, rearParts, .67+.48, -.078, z, 24).rotation.z = Math.PI/2;
+}
+// The removable-looking cover is offset from the open well, with a visible lip and four screws.
+roundedBox(1.28, .045, 1.12, .085, edgeMat, rearParts, -.78, -.035, -.05);
+roundedBox(1.18, .025, 1.02, .07, bodyMat, rearParts, -.78, -.061, -.05);
+const screwMat = new THREE.MeshStandardMaterial({color:'#77716a',metalness:.78,roughness:.3});
+for (const x of [-1.25,-.31]) for (const z of [-.43,.33]) {
+  cylinder(.055,.018,screwMat,rearParts,x,-.081,z,20);
+  roundedBox(.052,.009,.009,.003,darkMat,rearParts,x,-.092,z).rotation.y = Math.PI/4;
+}
+// Small molded side switches on both sides of the casing.
+for (const side of [-1,1]) {
+  roundedBox(.055,.14,.40,.025,darkMat,calculator,side*1.735,.02,1.08);
+  roundedBox(.095,.09,.17,.025,keyMat,calculator,side*1.765,.035,1.03);
+  roundedBox(.055,.13,.31,.022,darkMat,calculator,side*1.735,-.15,-.95);
+  roundedBox(.095,.08,.12,.022,edgeMat,calculator,side*1.765,-.14,-.95);
+}
 
 // Thin raised bezel surrounding the LED window.
 roundedBox(2.63,.075,.78,.065,edgeMat,calculator,0,.405,.88);
