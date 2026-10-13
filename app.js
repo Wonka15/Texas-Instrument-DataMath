@@ -634,7 +634,30 @@ function wireLedStudio(){
  flicker.addEventListener('change',()=>{ledStudio.flicker=flicker.value;document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');applyLedStudio();});
  document.documentElement.classList.toggle('datamath-vintage-flicker',flicker.value==='vintage');
  reflections.addEventListener('change',()=>{ledStudio.reflections=reflections.checked;applyLedStudio();});
- if(phosphorToggle){phosphorToggle.addEventListener('click',()=>{ledStudio.phosphor=!ledStudio.phosphor;phosphorToggle.setAttribute('aria-pressed',String(ledStudio.phosphor));phosphorToggle.textContent=ledStudio.phosphor?'✦ PHOSPHOR GLOW ON':'✧ PHOSPHOR GLOW OFF';applyLedStudio();});}
+ if(phosphorToggle){
+  // Use one explicit toggle function so the button state and every glow layer stay synchronized.
+  const setPhosphorEnabled=enabled=>{
+   ledStudio.phosphor=enabled;
+   phosphorToggle.setAttribute('aria-pressed',String(enabled));
+   phosphorToggle.textContent=enabled?'✦ PHOSPHOR GLOW ON':'✧ PHOSPHOR GLOW OFF';
+   ledGlow.visible=enabled&&!nixieMode;
+   ledGlow.material.opacity=enabled?0.18:0;
+   displayBloomLayers.forEach(layer=>{
+    layer.visible=enabled&&!nixieMode;
+    layer.material.opacity=enabled?0.025:0;
+   });
+   ledLight.visible=enabled&&ledStudio.reflections&&!nixieMode;
+   ledLight.intensity=enabled?ledLight.intensity:0;
+   applyLedStudio();
+   // Re-assert the OFF state after applying the selected glow profile.
+   if(!enabled){
+    ledGlow.visible=false;ledGlow.material.opacity=0;
+    displayBloomLayers.forEach(layer=>{layer.visible=false;layer.material.opacity=0;});
+    ledLight.visible=false;ledLight.intensity=0;
+   }
+  };
+  phosphorToggle.addEventListener('click',()=>setPhosphorEnabled(!ledStudio.phosphor));
+ }
  darkToggle.addEventListener('click',()=>setDarkMode(!darkMode));
  if(nixieToggle){
   nixieToggle.setAttribute('aria-pressed',String(nixieMode));
