@@ -959,18 +959,26 @@ async function startCameraPreview() {
     setArHint('Camera preview is unavailable in this browser. Use the interactive 3D view.');
     return;
   }
+  if (!window.isSecureContext) {
+    throw new Error('Camera access requires HTTPS.');
+  }
   previewStream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: { facingMode: { ideal: 'environment' } }
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
   });
+  arCameraFeed.muted = true;
+  arCameraFeed.playsInline = true;
+  arCameraFeed.setAttribute('playsinline', '');
+  arCameraFeed.setAttribute('webkit-playsinline', '');
   arCameraFeed.srcObject = previewStream;
   await arCameraFeed.play();
   arCameraFeed.classList.add('is-active');
   tabletop.visible = false;
-  calculator.scale.setScalar(0.42);
-  setArButtonState(true, 'EXIT PREVIEW');
-  setArHint('Camera preview only — drag to rotate and zoom. Spatial tracking is not available in this browser.');
-  loadState.textContent = 'CAMERA PREVIEW';
+  calculator.scale.setScalar(0.50);
+  controls.enabled = true;
+  setArButtonState(true, 'EXIT CAMERA');
+  setArHint('Safari camera overlay: move your phone to line up the model, drag to rotate, and pinch to zoom. iPhone/iPad Safari does not provide surface-anchored WebXR AR.');
+  loadState.textContent = 'CAMERA OVERLAY';
 }
 function stopCameraPreview() {
   previewStream?.getTracks().forEach((track) => track.stop());
@@ -980,6 +988,14 @@ function stopCameraPreview() {
   arCameraFeed.classList.remove('is-active');
   restoreAfterAr();
 }
+window.addEventListener('pagehide', () => {
+  previewStream?.getTracks().forEach((track) => track.stop());
+  previewStream = null;
+  arCameraFeed.srcObject = null;
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && previewStream) stopCameraPreview();
+});
 arButton.addEventListener('click', async () => {
   try {
     if (renderer.xr.isPresenting) {
@@ -999,7 +1015,7 @@ arButton.addEventListener('click', async () => {
     console.warn('AR could not start:', error);
     if (previewStream) stopCameraPreview();
     else restoreAfterAr();
-    setArHint('AR could not start. Check camera permissions and HTTPS, then try again.');
+    setArHint(error?.name === 'NotAllowedError' ? 'Camera permission was denied. In iOS Settings, allow Safari camera access, then reload and try again.' : 'AR/camera could not start. Use HTTPS, allow camera access, and try again.');
     setArButtonState(false, 'AR MODE');
     tabletop.visible = true;
     controls.enabled = true;
@@ -1029,60 +1045,125 @@ renderer.setAnimationLoop((time, frame)=>{
   animateLedEffects(time);
   renderer.render(world,camera);
 });
-// --- 11. Optional KZSC audio stream ------------------------------------------
-// Keep the compact player resilient: try the high-quality feed first, then the
-// lower-bandwidth feed if the station reports a stream error.
+// --- 11. KZSC live radio: high quality first, automatic compressed fallback ----
+// Official KZSC listen page lists a 128 kbps high-quality feed and a 56 kbps
+// compressed feed. A static GitHub Pages site cannot run an external monitor,
+// so playback errors/stalls trigger an in-player fallback and a clear status.
 const musicToggle = document.querySelector('#musicToggle');
 const kzscAudio = document.querySelector('#kzscAudio');
+const radioStatus = document.querySelector('#radioStatus');
 const kzscStreams = [
-  'https://kzscfms1-geckohost.radioca.st/kzschigh',
-  'https://kzscfms1-geckohost.radioca.st/kzsclow'
+  { url: 'https://kzscfms1-geckohost.radioca.st/kzschigh', label: 'HIGH QUALITY · 128 KBPS' },
+  { url: 'https://kzscfms1-geckohost.radioca.st/kzsclow', label: 'LOW BITRATE · 56 KBPS' }
 ];
 let kzscStreamIndex = 0;
+let kzscWantsPlayback = false;
 let kzscFallbackTried = false;
+let kzscFallbackBusy = false;
 
 function setKzscButton(playing) {
-  musicToggle.innerHTML = playing ? 'Ⅱ KZSC' : '▶ KZSC';
+  musicToggle.innerHTML = playing ? 'Ⅱ <span>PAUSE RADIO</span>' : '▶ <span>LISTEN LIVE</span>';
   musicToggle.setAttribute('aria-pressed', String(playing));
   musicToggle.title = playing ? 'Pause KZSC 88.1 FM' : 'Play KZSC 88.1 FM';
+  musicToggle.classList.toggle('is-playing', playing);
 }
-
-musicToggle.addEventListener('click', async () => {
-  if (!kzscAudio.paused) {
-    kzscAudio.pause();
-    setKzscButton(false);
-    return;
+function setRadioStatus(message, state = '') {
+  if (radioStatus) {
+    radioStatus.textContent = message;
+    radioStatus.dataset.state = state;
   }
-
+}
+function useKzscStream(index) {
+  kzscStreamIndex = index;
+  kzscAudio.src = kzscStreams[index].url;
+  kzscAudio.load();
+  setRadioStatus(kzscStreams[index].label, index === 1 ? 'fallback' : '');
+}
+async function startKzscPlayback({ allowFallback = true } = {}) {
+  kzscWantsPlayback = true;
   try {
     await kzscAudio.play();
     setKzscButton(true);
+    setRadioStatus('ON AIR · ' + kzscStreams[kzscStreamIndex].label, kzscStreamIndex === 1 ? 'fallback' : 'live');
+    return true;
   } catch (error) {
     console.warn('KZSC stream playback failed:', error);
+    if (allowFallback && kzscStreamIndex === 0 && !kzscFallbackTried) {
+      kzscFallbackTried = true;
+      useKzscStream(1);
+      try {
+        await kzscAudio.play();
+        setKzscButton(true);
+        setRadioStatus('ON AIR · LOW BITRATE · 56 KBPS', 'fallback');
+        return true;
+      } catch (fallbackError) {
+        console.warn('KZSC compressed stream playback failed:', fallbackError);
+      }
+    }
+    kzscWantsPlayback = false;
     setKzscButton(false);
-    setArHint('KZSC could not start. Check your connection or open the official KZSC listen page.');
+    setRadioStatus('STREAM UNAVAILABLE · TAP TO RETRY', 'error');
+    setArHint('KZSC could not start. Retry the player or open the official KZSC listen page.');
+    return false;
   }
-});
-
-// If the high-quality stream errors, retry once using the lower-bandwidth feed.
-kzscAudio.addEventListener('error', () => {
-  if (kzscFallbackTried || kzscStreamIndex >= kzscStreams.length - 1) {
+}
+musicToggle.addEventListener('click', async () => {
+  if (!kzscAudio.paused) {
+    kzscWantsPlayback = false;
+    kzscAudio.pause();
     setKzscButton(false);
-    setArHint('KZSC stream is unavailable. Try the official station page at kzsc.org/listen.');
+    setRadioStatus(kzscStreams[kzscStreamIndex].label + ' · PAUSED', '');
     return;
   }
-
-  kzscFallbackTried = true;
-  kzscStreamIndex = 1;
-  kzscAudio.src = kzscStreams[kzscStreamIndex];
-  kzscAudio.load();
-  if (!kzscAudio.paused) {
-    kzscAudio.play().then(() => setKzscButton(true)).catch((error) => {
-      console.warn('KZSC fallback stream playback failed:', error);
-      setKzscButton(false);
-    });
-  }
+  if (kzscStreamIndex === 1 && !kzscFallbackTried) kzscFallbackTried = true;
+  await startKzscPlayback({ allowFallback: true });
 });
 
-kzscAudio.addEventListener('ended', () => setKzscButton(false));
+// If the high-quality feed drops while playing, switch to the compressed feed.
+// Avoid looping between feeds: one automatic fallback attempt per play session.
+async function fallbackKzscStream(reason) {
+  if (!kzscWantsPlayback || kzscStreamIndex === 1 || kzscFallbackTried || kzscFallbackBusy) {
+    if (kzscStreamIndex === 1) {
+      setKzscButton(false);
+      setRadioStatus('STREAM INTERRUPTED · TAP TO RETRY', 'error');
+    }
+    return;
+  }
+  kzscFallbackBusy = true;
+  kzscFallbackTried = true;
+  console.warn('KZSC high-quality stream interrupted; switching to compressed stream:', reason);
+  setRadioStatus('SWITCHING TO LOW BITRATE…', 'fallback');
+  useKzscStream(1);
+  try {
+    await kzscAudio.play();
+    setKzscButton(true);
+    setRadioStatus('ON AIR · LOW BITRATE · 56 KBPS', 'fallback');
+  } catch (error) {
+    console.warn('KZSC fallback playback failed:', error);
+    kzscWantsPlayback = false;
+    setKzscButton(false);
+    setRadioStatus('STREAM UNAVAILABLE · TAP TO RETRY', 'error');
+    setArHint('KZSC is temporarily unavailable. Try the official KZSC listen page.');
+  } finally {
+    kzscFallbackBusy = false;
+  }
+}
+kzscAudio.addEventListener('error', () => fallbackKzscStream('audio error'));
+kzscAudio.addEventListener('stalled', () => {
+  if (kzscWantsPlayback && kzscStreamIndex === 0) fallbackKzscStream('audio stalled');
+});
+kzscAudio.addEventListener('playing', () => {
+  if (kzscWantsPlayback) {
+    setKzscButton(true);
+    setRadioStatus('ON AIR · ' + kzscStreams[kzscStreamIndex].label, kzscStreamIndex === 1 ? 'fallback' : 'live');
+  }
+});
+kzscAudio.addEventListener('pause', () => {
+  if (!kzscWantsPlayback) setKzscButton(false);
+});
+kzscAudio.addEventListener('ended', () => {
+  kzscWantsPlayback = false;
+  setKzscButton(false);
+  setRadioStatus('STREAM ENDED · TAP TO RESTART', 'error');
+});
 loadState.textContent='MODEL READY';
